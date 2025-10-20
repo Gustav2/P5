@@ -8,8 +8,17 @@ SIM_DIR := src/simulations
 RESULTS_DIR := results
 SCRATCH_LINK := $(NS3_DIR)/scratch/p5-simulation
 
-# Simulation names (add your .cc files here without extension)
-SIMULATIONS := lora
+# Build NS-3 arguments from variables
+NS3_ARGS :=
+ifdef NDEVICES
+    NS3_ARGS += --nDevices=$(NDEVICES)
+endif
+ifdef TIME
+    NS3_ARGS += --time=$(TIME)
+endif
+ifdef DISTANCE
+    NS3_ARGS += --distance=$(DISTANCE)
+endif
 
 # Default target
 .PHONY: all
@@ -18,7 +27,6 @@ all: setup build
 # Setup symlink
 .PHONY: setup
 setup:
-	@echo "Setting up symlink to NS-3..."
 	@mkdir -p $(SIM_DIR)
 	@if [ ! -L $(SCRATCH_LINK) ]; then \
 		ln -s $(PROJECT_DIR)/$(SIM_DIR) $(SCRATCH_LINK); \
@@ -27,66 +35,80 @@ setup:
 		echo "✓ Symlink already exists"; \
 	fi
 
-# Build NS-3 with your simulations
+# Build NS-3
 .PHONY: build
 build: setup
-	@echo "Building NS-3 with simulations..."
+	@echo "Building NS-3..."
 	@cd $(NS3_DIR) && ./ns3 build
 	@echo "✓ Build complete"
 
 # Clean build
 .PHONY: clean
 clean:
-	@echo "Cleaning NS-3 build..."
 	@cd $(NS3_DIR) && ./ns3 clean
 	@echo "✓ Clean complete"
 
-# Rebuild everything
+# Rebuild
 .PHONY: rebuild
 rebuild: clean build
 
 # Configure NS-3
 .PHONY: configure
 configure:
-	@echo "Configuring NS-3..."
 	@cd $(NS3_DIR) && ./ns3 configure --enable-examples --enable-tests
 	@echo "✓ Configuration complete"
 
-# Run specific simulation
-.PHONY: run-%
-run-%: build
-	@echo "Running simulation: $*"
-	@cd $(NS3_DIR) && ./ns3 run "p5-simulation/$*"
+# Run simulation
+# Usage: make run lora NDEVICES=10 TIME=100
+.PHONY: run
+run: build
+	@if [ "$(filter-out run,$(MAKECMDGOALS))" = "" ]; then \
+		echo "Error: No simulation specified"; \
+		echo "Usage: make run <simulation> [NDEVICES=N] [TIME=T] [DISTANCE=D]"; \
+		echo "Example: make run lora NDEVICES=10 TIME=100"; \
+		exit 1; \
+	fi
+	@SIM_NAME=$(filter-out run,$(MAKECMDGOALS)); \
+	echo "Running: p5-simulation/$$SIM_NAME $(NS3_ARGS)"; \
+	cd $(NS3_DIR) && ./ns3 run "p5-simulation/$$SIM_NAME $(NS3_ARGS)"
 
-# Run with arguments
-.PHONY: run-with-args
-run-with-args: build
-	@echo "Running: $(SIM) with args: $(ARGS)"
-	@cd $(NS3_DIR) && ./ns3 run "p5-simulation/$(SIM) $(ARGS)"
+# Run with verbose logging
+.PHONY: run-verbose
+run-verbose: build
+	@SIM_NAME=$(filter-out run-verbose,$(MAKECMDGOALS)); \
+	if [ -z "$$SIM_NAME" ]; then \
+		echo "Error: No simulation specified"; \
+		exit 1; \
+	fi; \
+	echo "Running with verbose logging: p5-simulation/$$SIM_NAME"; \
+	cd $(NS3_DIR) && NS_LOG="*=info" ./ns3 run "p5-simulation/$$SIM_NAME $(NS3_ARGS)"
 
-# Example: make run-with-args SIM=lora-range-test ARGS="--nDevices=10 --distance=1500"
-
-# Run all simulations
-.PHONY: run-all
-run-all: build
-	@for sim in $(SIMULATIONS); do \
-		echo "Running $$sim..."; \
-		cd $(NS3_DIR) && ./ns3 run "p5-simulation/$$sim"; \
-	done
-
-# Create results directory
-.PHONY: results-dir
-results-dir:
+# Run and save output
+.PHONY: run-save
+run-save: build
 	@mkdir -p $(RESULTS_DIR)
+	@SIM_NAME=$(filter-out run-save,$(MAKECMDGOALS)); \
+	if [ -z "$$SIM_NAME" ]; then \
+		echo "Error: No simulation specified"; \
+		exit 1; \
+	fi; \
+	TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
+	OUTPUT_FILE=$(RESULTS_DIR)/$${SIM_NAME}_$$TIMESTAMP.txt; \
+	echo "Running and saving to: $$OUTPUT_FILE"; \
+	cd $(NS3_DIR) && ./ns3 run "p5-simulation/$$SIM_NAME $(NS3_ARGS)" > $(PROJECT_DIR)/$$OUTPUT_FILE; \
+	echo "✓ Output saved to $$OUTPUT_FILE"
 
-# Run experiments with different parameters
+# Run experiments
 .PHONY: experiment
-experiment: build results-dir
+experiment: build
+	@mkdir -p $(RESULTS_DIR)
 	@echo "Running experiments..."
-	@for dist in 500 1000 1500 2000; do \
-		echo "Testing distance: $$dist m"; \
-		cd $(NS3_DIR) && ./ns3 run "p5-simulation/lora-range-test --distance=$$dist" \
-			> $(PROJECT_DIR)/$(RESULTS_DIR)/range_$${dist}m.txt; \
+	@for devices in 5 10 15 20; do \
+		for dist in 500 1000 1500 2000; do \
+			echo "Testing: $$devices devices, $$dist m radius"; \
+			cd $(NS3_DIR) && ./ns3 run "p5-simulation/lora --nDevices=$$devices --distance=$$dist" \
+				> $(PROJECT_DIR)/$(RESULTS_DIR)/lora_d$${devices}_r$${dist}m.txt; \
+		done; \
 	done
 	@echo "✓ Experiments complete. Results in $(RESULTS_DIR)/"
 
@@ -94,9 +116,9 @@ experiment: build results-dir
 .PHONY: list
 list:
 	@echo "Available simulations:"
-	@cd $(SIM_DIR) && ls -1 *.cc 2>/dev/null | sed 's/.cc$$/  - /' || echo "  (none found)"
+	@cd $(SIM_DIR) 2>/dev/null && ls -1 *.cc | sed 's/.cc$$/  - /' || echo "  (none found)"
 
-# Show simulation paths
+# Show project info
 .PHONY: info
 info:
 	@echo "Project Configuration:"
@@ -106,43 +128,52 @@ info:
 	@echo "  Results:       $(RESULTS_DIR)"
 	@echo "  Symlink:       $(SCRATCH_LINK)"
 	@echo ""
-	@echo "Available simulations:"
-	@$(MAKE) list
+	@$(MAKE) -s list
 
 # Remove symlink
 .PHONY: unlink
 unlink:
-	@echo "Removing symlink..."
 	@rm -f $(SCRATCH_LINK)
 	@echo "✓ Symlink removed"
 
-# Clean project results
+# Clean results
 .PHONY: clean-results
 clean-results:
-	@echo "Cleaning results..."
 	@rm -rf $(RESULTS_DIR)/*
 	@echo "✓ Results cleaned"
 
-# Help target
+# Help
 .PHONY: help
 help:
 	@echo "P5 LoRa Simulation - Available targets:"
 	@echo ""
+	@echo "Building:"
 	@echo "  make setup          - Create symlink to NS-3"
-	@echo "  make build          - Build NS-3 with simulations"
-	@echo "  make clean          - Clean NS-3 build"
+	@echo "  make build          - Build NS-3"
+	@echo "  make clean          - Clean build"
 	@echo "  make rebuild        - Clean and rebuild"
-	@echo "  make configure      - Configure NS-3"
 	@echo ""
-	@echo "  make run-<name>     - Run specific simulation"
-	@echo "  make run-all        - Run all simulations"
-	@echo "  make experiment     - Run parameter sweep experiments"
+	@echo "Running:"
+	@echo "  make run <name>                    - Run simulation"
+	@echo "  make run <name> NDEVICES=10        - Run with number of devices"
+	@echo "  make run <name> TIME=100           - Run with simulation time"
+	@echo "  make run <name> DISTANCE=1500      - Run with distance"
+	@echo "  make run-verbose <name> [params]   - Run with logging"
+	@echo "  make run-save <name> [params]      - Save output to file"
+	@echo "  make experiment                    - Run parameter sweep"
 	@echo ""
+	@echo "Utilities:"
 	@echo "  make list           - List available simulations"
-	@echo "  make info           - Show project configuration"
-	@echo "  make help           - Show this help"
+	@echo "  make info           - Show configuration"
+	@echo "  make clean-results  - Clean results"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make run-lora-range-test"
-	@echo "  make run-with-args SIM=lora-range-test ARGS=\"--nDevices=10\""
-	@echo "  make experiment"
+	@echo "  make run lora"
+	@echo "  make run lora NDEVICES=10"
+	@echo "  make run lora NDEVICES=20 TIME=200"
+	@echo "  make run lora NDEVICES=15 TIME=100 DISTANCE=2000"
+	@echo "  make run-save lora NDEVICES=10"
+
+# Catch-all to prevent "No rule to make target" errors
+%:
+	@:
