@@ -4,21 +4,26 @@ from collections import defaultdict
 from .config import E_TRESHOLD, E_MAX
 
 class EnergyLogger:
-    def __init__(self, enabled=True):
-        self.enabled = enabled
-        self.data = defaultdict(list)  # {node_id: [(time, energy), ...]}
+    enabled = True
+    data = defaultdict(list)
 
-    def log(self, node_id, time, energy):
-        if self.enabled:
-            self.data[node_id].append((time, energy))
+    @classmethod
+    def log(cls, node_id, time, energy):
+        if cls.enabled:
+            cls.data[node_id].append((time, energy))
 
-    def plot(self, filename="energy_plot.png"):
-        if not self.enabled:
+    @classmethod
+    def disable(cls):
+        cls.enabled = False
+
+    @classmethod
+    def plot(cls, filename="energy_plot.png"):
+        if not cls.enabled:
             print("EnergyLogger is disabled.")
             return
 
         plt.figure(figsize=(15, 10))
-        for node_id, records in self.data.items():
+        for node_id, records in cls.data.items():
             times, energies = zip(*records)
             plt.plot(times, energies, label=f"Node {node_id}")
 
