@@ -1,22 +1,18 @@
 import simpy, random, math
-from statistics import mean
 
-RANGE = 150     # meters
-TX_TIME = 0.05  # seconds
-LISTEN_TIME = 0.1
-E_THRESHOLD = 1.0
-E_HARVEST_RATE = (0.001, 0.005)  # per second, random
-E_TX, E_RX = 0.05, 0.02
+from .network import Network
+
+from .config import E_HARVEST_RATE, E_THRESHOLD, LISTEN_TIME, E_RX, E_TX, TX_TIME
 
 class Node:
-    def __init__(self, env, node_id, x, y):
+    def __init__(self, env: simpy.Environment, node_id: int, x: float, y: float):
         self.env = env
         self.id = node_id
         self.x, self.y = x, y
         self.energy = random.uniform(0.5, 1.0)
         self.offset = random.uniform(-1, 1)
         self.neighbors = {}
-        self.predicted_offset = 0.0  # phase adjustment (sec)
+        self.predicted_offset = 0.0
         env.process(self.run())
 
     def local_time(self):
@@ -56,13 +52,13 @@ class Node:
     def listen(self, duration):
         self.energy -= E_RX
         yield self.env.timeout(duration)
-        return radio.check_for_msgs(self)
+        return Network.messages_received(self)
 
     def transmit_beacon(self):
         self.energy -= E_TX
         msg = {'type': 'BEACON', 'id': self.id, 'time': self.local_time()}
         yield self.env.timeout(TX_TIME)
-        radio.broadcast(self, msg)
+        Network.broadcast(self, msg)
 
     def receive(self, msg):
         sender = msg['id']
@@ -70,42 +66,3 @@ class Node:
         self.neighbors[sender] = offset_est
 	    # update phase bias (toward average neighbor offset)
         self.predicted_offset = 0.8*self.predicted_offset + 0.2*offset_est
-
-class Radio:
-    def __init__(self, env, nodes, range_=RANGE, p_loss=0.1):
-        self.env = env
-        self.nodes = nodes
-        self.range = range_
-        self.p_loss = p_loss
-        self.mailboxes = {n.id: [] for n in nodes}
-
-    def broadcast(self, sender, msg):
-        for n in self.nodes:
-            if n.id == sender.id:
-                continue
-            if sender.distance(n) <= self.range and random.random() > self.p_loss:
-                delay = random.uniform(0.01, 0.05)
-                self.env.process(self.deliver(n, msg, delay))
-
-    def deliver(self, node, msg, delay):
-        yield self.env.timeout(delay)
-        node.receive(msg)
-        self.mailboxes[node.id].append(msg)
-
-    def check_for_msgs(self, node):
-        msgs = self.mailboxes[node.id]
-        self.mailboxes[node.id] = []
-        return len(msgs) > 0
-
-def simulate(n=20, sim_time=500000):
-    env = simpy.Environment()
-    nodes = [Node(env, i, random.uniform(0,200), random.uniform(0,200)) for i in range(n)]
-    global radio
-    radio = Radio(env, nodes)
-    env.run(until=sim_time)
-    neighs = [len(n.neighbors) for n in nodes]
-    print("Avg discovered neighbors:", mean(neighs))
-    for n in nodes[:5]:
-        print(f"Node {n.id} knows {len(n.neighbors)} nodes")
-
-simulate()

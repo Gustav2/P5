@@ -2,3 +2,5 @@ venv/
 .venv/
 .idea/
 .ropeproject/
+.vscode/
+__pycache__
