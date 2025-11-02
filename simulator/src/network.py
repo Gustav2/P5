@@ -2,7 +2,7 @@ import random
 
 from typing import TYPE_CHECKING, List
 
-from .config import TX_LOSS, DELAY_RANGE
+from .config import TX_LOSS
 
 if TYPE_CHECKING:
     from .node import Node
@@ -19,16 +19,13 @@ class Network:
     @classmethod
     def broadcast(cls, sender: "Node", message):
         for node in cls.nodes:
-            if node.id == sender.id:
-                continue
-            if random.random() > TX_LOSS:
-                delay = random.uniform(DELAY_RANGE[0], DELAY_RANGE[1])
-                node.env.process(cls._deliver(node, message, delay))
+            if node.id != sender.id and random.random() > TX_LOSS:
+                cls._deliver(node, message)
     
     @classmethod
-    def _deliver(cls, receiver: "Node", msg, delay: float):
-        yield receiver.env.timeout(delay)
-        receiver.receive(msg)
+    def _deliver(cls, receiver: "Node", msg):
+        # TODO add message loss if more than 1 message is broadcasted and received
+        receiver.env.process(receiver.receive(msg)) 
         cls.mailboxes[receiver.id].append(msg)
 
     @classmethod
