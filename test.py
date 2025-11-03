@@ -1,8 +1,8 @@
 import simpy, random, math
 from statistics import mean
 
-RANGE = 150     # meters
-TX_TIME = 0.05  # seconds
+RANGE = 150      # meters
+TX_TIME = 0.05   # seconds
 LISTEN_TIME = 0.1
 E_THRESHOLD = 1.0
 E_HARVEST_RATE = (0.001, 0.005)  # per second, random
@@ -97,7 +97,7 @@ class Radio:
         self.mailboxes[node.id] = []
         return len(msgs) > 0
 
-def simulate(n=20, sim_time=500000):
+def simulate(n=20, sim_time=500):
     env = simpy.Environment()
     nodes = [Node(env, i, random.uniform(0,200), random.uniform(0,200)) for i in range(n)]
     global radio
@@ -109,3 +109,13 @@ def simulate(n=20, sim_time=500000):
         print(f"Node {n.id} knows {len(n.neighbors)} nodes")
 
 simulate()
+
+
+# 10 pr segment 
+# x segmenter
+
+
+# målet er 10 bytes
+# how many collisions
+# how many retransmissions
+# energy consumption pr node
