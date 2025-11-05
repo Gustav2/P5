@@ -4,3 +4,5 @@ venv/
 .ropeproject/
 .vscode/
 __pycache__
+
+energy_plot.png
