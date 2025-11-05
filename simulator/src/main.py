@@ -17,9 +17,17 @@ def main():
     env.run(until=SIM_TIME)
 
     discovered_neighs = [len(n.neighbors) for n in nodes]
-    avg = mean(discovered_neighs)
-    print("Avg discovered neighbors:", avg)
-    print("Success rate:", avg / (NODES - 1) * 100, "%")
+    avg_discoveries = mean(discovered_neighs)
+    print("Average discoveries:", avg_discoveries)
+    print("Discovery success rate:", avg_discoveries / (NODES - 1) * 100, "%")
+
+    meetings_list = [
+        info["meetings"]
+        for n in nodes
+        for info in n.neighbors.values()
+    ]
+    avg_meetings = mean(meetings_list)
+    print("Average meetings amounts:", avg_meetings)
 
     EnergyLogger().plot()
 
