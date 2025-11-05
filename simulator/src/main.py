@@ -1,7 +1,7 @@
 import simpy, random
 from statistics import mean
 
-from .core.node import Node
+from .node.node import Node
 from .core.network import Network
 from .core.energy_logger import EnergyLogger
 

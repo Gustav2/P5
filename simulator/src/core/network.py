@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, List
 from ..config import TX_LOSS
 
 if TYPE_CHECKING:
-    from .node import Node
+    from ..node.node import Node
 
 class Network:
     nodes: List["Node"] = []
