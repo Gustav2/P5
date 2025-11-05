@@ -2,8 +2,7 @@ import random
 
 from typing import TYPE_CHECKING, List
 
-from .config import TX_LOSS
-from .state import State
+from ..config import TX_LOSS
 
 if TYPE_CHECKING:
     from .node import Node
@@ -21,8 +20,6 @@ class Network:
     def broadcast(cls, sender: "Node", message):
         for node in cls.nodes:
             if node.id == sender.id:
-                continue
-            if node.state != State.Idle:
                 continue
             if random.random() > TX_LOSS:
                 cls._deliver(node, message)

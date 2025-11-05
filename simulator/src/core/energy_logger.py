@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from collections import defaultdict
 
-from .config import E_TRESHOLD, E_MAX
+from ..config import E_TRESHOLD, E_MAX
 
 class EnergyLogger:
     enabled = True

@@ -4,7 +4,7 @@ from .network import Network
 from .energy_logger import EnergyLogger
 from .state import State
 
-from .config import E_HARVEST_RATE, E_TRESHOLD, E_RX, E_TX, TX_TIME, E_IDLE, E_MAX, DELAY_RANGE
+from ..config import E_HARVEST_RATE, E_TRESHOLD, E_RX, E_TX, TX_TIME, E_IDLE, E_MAX, DELAY_RANGE
 
 class Node:
     def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
