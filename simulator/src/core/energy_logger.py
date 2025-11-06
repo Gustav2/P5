@@ -22,7 +22,7 @@ class EnergyLogger:
             print("EnergyLogger is disabled.")
             return
 
-        plt.figure(figsize=(15, 10))
+        plt.figure(figsize=(30, 20))
         for node_id, records in cls.data.items():
             times, energies = zip(*records)
             plt.plot(times, energies, label=f"Node {node_id}")
