@@ -19,10 +19,11 @@ class Harvester:
 
     def discharge(self, joules: float):
         if joules > self.remaining_energy():
-            # TODO fix
-            return
             raise ValueError("Not enough energy to use")
         self.energy -= joules
+
+    def discharge_idle(self, duration: float):
+        self.energy = max(0, self.energy - duration * E_IDLE)
 
     def idle_time_available(self):
         remaining = self.remaining_energy();

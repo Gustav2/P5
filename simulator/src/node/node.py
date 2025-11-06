@@ -47,16 +47,17 @@ class Node:
             self._update_state()
 
     def listen(self, duration):
-        available_sec = min(self.harvester.idle_time_available(), duration);
+        available_sec = min(self.harvester.idle_time_available(), duration)
         energy_to_use = E_IDLE * available_sec
-    
+
         if not self._is_available_for_action(energy_to_use):
             return False
 
-        yield self.env.timeout(available_sec)
         self.harvester.discharge(energy_to_use)
 
+        yield self.env.timeout(available_sec)
         self._update_state()
+
         return Network().messages_received(self)
 
     def transmit(self):
@@ -64,7 +65,6 @@ class Node:
             return
 
         self.state = State.Transmit
-
         self.harvester.discharge(E_TX)
         yield self.env.timeout(TX_TIME)
 
@@ -80,8 +80,8 @@ class Node:
         if not self._is_available_for_action(E_RX):
             return
 
-        yield self.env.timeout(random.uniform(*DELAY_RANGE))
         self.harvester.discharge(E_RX)
+        yield self.env.timeout(random.uniform(*DELAY_RANGE))
         self.state = State.Receive
         yield self.env.timeout(TX_TIME)
         
