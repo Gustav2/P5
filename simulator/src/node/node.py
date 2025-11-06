@@ -5,18 +5,19 @@ from ..core.energy_logger import EnergyLogger
 from ..core.state import State
 from .harvester import Harvester
 
-from ..config import E_TRESHOLD, E_RX, E_TX, TX_TIME, E_IDLE, DELAY_RANGE, CLOCK_DRIFT_RANGE, WAKEUP_POINT_TRESHOLD, MEETUP_INTERVAL, WAKEUP_RANGE
+from ..config import E_TRESHOLD, E_RX, E_TX, TX_TIME, E_IDLE, DELAY_RANGE, CLOCK_DRIFT_RANGE, WAKEUP_POINT_TRESHOLD, MEETUP_INTERVAL, WAKEUP_RANGE, START_SYNC_AFTER
 
 class Node:
     def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
         self.id = id
-        self.x, self.y = x, y 
+        self.x, self.y = x, y
         self.state: State = State.Off
 
         self.harvester = Harvester()
         self.env = env
         
         self.neighbors = {}
+        self.sync_tries = 0
         self.clock_drift = random.uniform(*CLOCK_DRIFT_RANGE)
 
         env.process(self.run())
@@ -33,11 +34,15 @@ class Node:
 
             EnergyLogger().log(self.id, self.env.now, self.harvester.energy)    
 
-            # TODO add E consumption with the same amount as Idle
-            soonest_meet = self._soonest_meet()
-            meeting_in = soonest_meet if soonest_meet > 0 else random.uniform(*WAKEUP_RANGE)
+            meeting_in = random.uniform(*WAKEUP_RANGE)
+            if self.local_time() >= 86_400:
+                soonest_meet = self._soonest_meet()
+                if soonest_meet > 0:
+                    meeting_in = soonest_meet
+
             yield self.env.timeout(meeting_in)
-            self.harvester.harvest(meeting_in)
+            self.harvester.harvest(meeting_in, self.local_time())
+            self.harvester.discharge(E_IDLE * meeting_in)
             
             self._update_state()
 
@@ -71,29 +76,25 @@ class Node:
     def receive(self, msg):
         if not self._is_available_for_action(E_RX):
             return
-        
-        delay = random.uniform(*DELAY_RANGE)
-        yield self.env.timeout(delay)
 
+        yield self.env.timeout(random.uniform(*DELAY_RANGE))
         self.state = State.Receive
         yield self.env.timeout(TX_TIME)
         self.harvester.discharge(E_RX)
 
         sender = msg['id']
-        if sender in self.neighbors:
-            meetings = self.neighbors[sender]["meetings"] + 1
-            self.neighbors[sender] = {
-                "ratio": msg['time'] / self.local_time(),
-                "last_meet": self.local_time(),
-                "meetings": meetings
-            }
-        else:
-            self.neighbors[sender] = {
-                "ratio": msg['time'] / self.local_time(),
-                "last_meet": self.local_time(),
-                "meetings": 1
-            }
-            
+        time_ratio = msg['time'] / self.local_time()
+
+        meetings = self.neighbors.get(sender, {}).get("meetings", 0)
+        self.neighbors[sender] = {
+            "ratio": time_ratio,
+            "last_meet": self.local_time(),
+            "meetings": meetings + 1 if self.local_time() > START_SYNC_AFTER else meetings
+        }
+
+        if self.local_time() > START_SYNC_AFTER:
+            self.sync_tries += 1
+
         self._update_state()
 
     def local_time(self):
@@ -115,14 +116,15 @@ class Node:
         self.state = State.Idle if self.harvester.energy > E_TRESHOLD else State.Off
 
     def _soonest_meet(self):
+        meeting_point = float('inf')
         meet_in = 0
 
-        if not len(self.neighbors.items()):
-            return 0
-
         for _, neigh in self.neighbors.items():
-            meeting_point = neigh["last_meet"] + MEETUP_INTERVAL * neigh["ratio"]
-            if meeting_point < meet_in:
-                meet_in = meeting_point
-        
+            adjusted_time = MEETUP_INTERVAL * neigh["ratio"]
+            adjusted_meeting_point = neigh["last_meet"] + adjusted_time
+
+            if adjusted_meeting_point < meeting_point:
+                meeting_point = adjusted_meeting_point
+                meet_in = adjusted_time
+
         return max(0, meet_in - WAKEUP_POINT_TRESHOLD / 2)
