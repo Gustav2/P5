@@ -5,7 +5,7 @@ from ..core.energy_logger import EnergyLogger
 from ..core.state import State
 from .harvester import Harvester
 
-from ..config import E_TRESHOLD, E_RX, E_TX, TX_TIME, E_IDLE, DELAY_RANGE, CLOCK_DRIFT_RANGE, WAKEUP_POINT_TRESHOLD, MEETUP_INTERVAL, WAKEUP_RANGE, START_SYNC_AFTER
+from ..config import *
 
 class Node:
     def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
@@ -35,14 +35,14 @@ class Node:
             EnergyLogger().log(self.id, self.env.now, self.harvester.energy)    
 
             meeting_in = random.uniform(*WAKEUP_RANGE)
-            if self.local_time() >= 86_400:
+            if self.local_time() >= START_SYNC_AFTER:
                 soonest_meet = self._soonest_meet()
                 if soonest_meet > 0:
                     meeting_in = soonest_meet
 
             yield self.env.timeout(meeting_in)
             self.harvester.harvest(meeting_in, self.local_time())
-            self.harvester.discharge(E_IDLE * meeting_in)
+            self.harvester.discharge_idle(meeting_in)
             
             self._update_state()
 
@@ -65,11 +65,14 @@ class Node:
 
         self.state = State.Transmit
 
-        yield self.env.timeout(TX_TIME)
         self.harvester.discharge(E_TX)
+        yield self.env.timeout(TX_TIME)
 
         msg = {'id': self.id, 'time': self.local_time() + self.clock_drift}
         Network().broadcast(self, msg)
+
+        if self.local_time() >= START_SYNC_AFTER:
+            self.sync_tries += 1
 
         self._update_state()
 
@@ -78,30 +81,27 @@ class Node:
             return
 
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
+        self.harvester.discharge(E_RX)
         self.state = State.Receive
         yield self.env.timeout(TX_TIME)
-        self.harvester.discharge(E_RX)
-
+        
         sender = msg['id']
-        time_ratio = msg['time'] / self.local_time()
+        time_offset = msg['time'] - self.local_time()
 
-        meetings = self.neighbors.get(sender, {}).get("meetings", 0)
+        meetings = self.neighbors.get(sender, {}).get("meetings", 1)
         self.neighbors[sender] = {
-            "ratio": time_ratio,
+            "offset": time_offset,
             "last_meet": self.local_time(),
             "meetings": meetings + 1 if self.local_time() > START_SYNC_AFTER else meetings
         }
 
-        if self.local_time() > START_SYNC_AFTER:
-            self.sync_tries += 1
+        if meetings % 2 == 0 and self.local_time() >= START_SYNC_AFTER:
+            yield from self.transmit()
 
         self._update_state()
 
     def local_time(self):
         return self.env.now
-
-    def distance(self, other):
-        return math.hypot(self.x - other.x, self.y - other.y)
     
     def _is_available_for_action(self, required_energy):
         if self.state != State.Idle:
@@ -120,7 +120,7 @@ class Node:
         meet_in = 0
 
         for _, neigh in self.neighbors.items():
-            adjusted_time = MEETUP_INTERVAL * neigh["ratio"]
+            adjusted_time = MEETUP_INTERVAL + neigh["offset"]
             adjusted_meeting_point = neigh["last_meet"] + adjusted_time
 
             if adjusted_meeting_point < meeting_point:
