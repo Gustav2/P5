@@ -1,7 +1,5 @@
 import random
-
 from typing import TYPE_CHECKING, List
-
 from ..config import TX_LOSS
 
 if TYPE_CHECKING:
@@ -23,10 +21,10 @@ class Network:
                 continue
             if random.random() > TX_LOSS:
                 cls._deliver(node, message)
-    
+                
     @classmethod
     def _deliver(cls, receiver: "Node", msg):
-        receiver.env.process(receiver.receive(msg)) 
+        receiver.env.process(receiver.receive(msg))
         cls.mailboxes[receiver.id].append(msg)
 
     @classmethod

@@ -3,7 +3,7 @@ import random, math
 from ..config import LIGHT_RANGE_LUX, E_MAX, E_IDLE, E_TRESHOLD, SUNRISE_TIME, SUNSET_TIME
 
 class Harvester:
-    def __init__(self,  initial_energy = 0):
+    def __init__(self, initial_energy = 0):
         self.energy = initial_energy
         self.lux = random.uniform(*LIGHT_RANGE_LUX)
 
