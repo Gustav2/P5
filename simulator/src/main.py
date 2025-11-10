@@ -33,7 +33,8 @@ def main():
         n.sync_tries
         for n in nodes
     ]
-    print("Sync success rate:", avg_meetings / mean(sync_tries) * 100, "%")
+    avg_syncs = mean(sync_tries)
+    print("Sync success rate:", (avg_meetings / avg_syncs * 100) if avg_syncs > 0 else 0, "%")
 
     EnergyLogger().plot()
 

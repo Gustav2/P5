@@ -1,4 +1,4 @@
-import simpy, random, math
+import simpy, random
 
 from ..core.network import Network
 from ..core.energy_logger import EnergyLogger

@@ -7,12 +7,13 @@ class Harvester:
         self.energy = initial_energy
         self.lux = random.uniform(*LIGHT_RANGE_LUX)
 
-    def harvest(self, time, local_time):     
-        daytime = local_time % 86400
-        if daytime < SUNRISE_TIME and daytime > SUNRISE_TIME:
+    def harvest(self, time, local_time): 
+        daytime = local_time % 86_400
+        if daytime < SUNRISE_TIME or daytime > SUNSET_TIME:
             return
         
-        daytime_lux = self.lux * math.sin(math.pi * ((daytime - SUNRISE_TIME)/(SUNSET_TIME - SUNRISE_TIME)))
+        normalized_time = (daytime - SUNRISE_TIME) / (SUNSET_TIME - SUNRISE_TIME)
+        daytime_lux = self.lux * max(0, math.sin(math.pi * normalized_time))
 
         harvest_rate = max(0, (0.9083 * daytime_lux - 9.2714) / 100_000)
         self.energy = min(self.energy + harvest_rate * time, E_MAX)
