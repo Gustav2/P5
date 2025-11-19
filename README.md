@@ -8,6 +8,10 @@ After waiting for the **wakeup_in** amount of seconds, Node fisrst listen to a r
 
 All of the operations can be perform **only if Node has enough energy** and if it's in **Idle** mode.
 
+## Harvesting
+
+During the Node creation we randomly select how many _lux_ it will receive based on the range. We also introduced day cycle, so the _lux_ value changes for each node thtough the day.
+
 ## Listen stage
 
 Node is listening to amount of seconds, which is available for it. If node receives a message during listening stage, it processes it.
