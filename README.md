@@ -1,2 +1,3 @@
-# P5
-Yet another project, possibly amazing this time
+## Notes
+
+Maximum amount of seconds we can listen to (to receive and transmit as well) is 200 seconds
