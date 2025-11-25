@@ -1,9 +1,9 @@
 import simpy, random
 from statistics import mean
 
-from .node import Node
-from .network import Network
-from .energy_logger import EnergyLogger
+from .node.node import Node
+from .core.network import Network
+from .core.energy_logger import EnergyLogger
 
 from .config import NODES, SIM_TIME, RANGE
 
@@ -19,7 +19,7 @@ def main():
     discovered_neighs = [len(n.neighbors) for n in nodes]
     avg = mean(discovered_neighs)
     print("Avg discovered neighbors:", avg)
-    print("Success rate:", avg / NODES * 100, "%")
+    print("Success rate:", avg / (NODES - 1) * 100, "%")
 
     EnergyLogger().plot()
 
