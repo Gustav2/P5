@@ -2,11 +2,11 @@ import random
 
 from typing import TYPE_CHECKING, List
 
-from .config import TX_LOSS
-from .state import State
+from ..config import TX_LOSS
+from ..node.state import State
 
 if TYPE_CHECKING:
-    from .node import Node
+    from ..node.node import Node
 
 class Network:
     nodes: List["Node"] = []
@@ -22,7 +22,7 @@ class Network:
         for node in cls.nodes:
             if node.id == sender.id:
                 continue
-            if node.state != State.Idle:
+            if node.state != State.Listen:
                 continue
             if random.random() > TX_LOSS:
                 cls._deliver(node, message)
