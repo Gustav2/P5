@@ -2,7 +2,7 @@ import random
 
 from typing import TYPE_CHECKING, List
 
-from ..config import TX_LOSS
+from ..config import PT_LOSS
 from ..node.state import State
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class Network:
                 continue
             if node.state != State.Listen:
                 continue
-            if random.random() > TX_LOSS:
+            if random.random() > PT_LOSS:
                 cls._deliver(node, message)
     
     @classmethod

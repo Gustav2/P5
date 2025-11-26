@@ -1,28 +1,28 @@
-ONE_DAY = 86_400 # Seconds in one day
-
 RANGE = 800 # Range for all devices in meters
 LOW_POWERED_NODES = 18 # Low powered nodes
 HIGH_POWERED_NODES = 36 # High powered nodes
 NODES = LOW_POWERED_NODES + HIGH_POWERED_NODES # Amount of nodes in the simulation
-SIM_TIME = 1 * ONE_DAY # Simulation time in seconds
-SUNRISE_TIME, SUNSET_TIME = 8 * 60 * 60, 18 * 60 * 60 # Time of sunrise and sunset in seconds
+
+ONE_DAY = 86_400_000 # Miliseconds in one day
+SIM_TIME = 7 * ONE_DAY # Simulation time in miliseconds
+SUNRISE_TIME = 8 * 60 * 60 * 1_000 # Time of sunrise in miliseconds
+SUNSET_TIME = 18 * 60 * 60 * 1_000 # Time of sunset in miliseconds
 IS_DAY_CYCLE = False # Is simulation using day cycle or charges infinitely
 
-TX_TIME = 0.0195 # Time used for decoding an incoming tx
-TX_LOSS = 0.1 # Chance of loosing a tx
-DELAY_RANGE = (0.01, 0.05) # Tx delay range
+PT_TIME = 19.5 # Time in miliseconds used for decoding an incoming packet
+PT_LOSS = 0.1 # Chance of loosing a packet
+DELAY_RANGE = (10, 50) # Packet delay range in miliseconds
 
-# All the energy is Joules
+# All the energy is Joules or Joules/miliseconds
 E_MAX = 8.82 # Maximum used energy
 E_TRESHOLD = 1.62 # Threshold for energy capacity
-E_IDLE =  0.00000495 # Energy used in idle mode
-E_LISTEN = 0.03564 # Energy used per second to listen to tranmissions
-E_TX = 0.0594 # Energy used to transmit the tx
-E_RX = E_LISTEN * TX_TIME # Energy used to receive and decode the tx
+E_IDLE =  0.00000495 / 1_000 # Energy used in idle mode
+E_LISTEN = 0.03564 / 1_000 # Energy used per second to listen to transmission
+E_TX = 0.0594 / 1_000 # Energy used to transmit the packet
+E_RX = E_LISTEN * PT_TIME # Energy used to receive and decode the packet
 
-LISTEN_TIME_RANGE = (5, 10) # Range for time listening
-CLOCK_DRIFT_RANGE = (-10, 10) # Range for a clock drift
-LISTEN_TIME_RANGE = (10, 30) # Times in seconds to listen to
+LISTEN_TIME_RANGE = (500, 1000) # Range for time listening
+CLOCK_DRIFT_RANGE = (-10, 10) # TODO Range for a clock drift
 
 HIGH_LIGHT_RANGE_LUX = (30, 35) # Number of lux for a high powered device
 LOW_LIGHT_RANGE_LUX = (15, 20) # Number of lux for a low powered device

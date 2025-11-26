@@ -29,7 +29,7 @@ class EnergyLogger:
         plt.axhline(y=E_TRESHOLD, color='black', linestyle='--', linewidth=1.5, label='Threshold')   
         plt.axhline(y=E_MAX, color='black', linestyle='--', linewidth=1.5, label='Max')
 
-        plt.xlabel("Time (seconds)")
+        plt.xlabel("Time (miliseconds)")
         plt.ylabel("Energy (joules)")
         plt.title("Energy during Simulation")
         plt.legend(loc='upper right', fontsize='small', ncol=2)

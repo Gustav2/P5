@@ -1,4 +1,4 @@
-import simpy, random
+import simpy, random, math
 
 from ..core.network import Network
 from ..core.energy_logger import EnergyLogger
@@ -26,7 +26,7 @@ class Node:
         while True:
             EnergyLogger().log(self.id, self.env.now, self.harvester.energy)
 
-            self.listen_time = random.uniform(*LISTEN_TIME_RANGE)
+            self.listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
             energy_to_use = self.listen_time * E_LISTEN + E_TX + E_RX
             idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
@@ -62,8 +62,8 @@ class Node:
 
         self.state = State.Transmit
         self.harvester.discharge(E_TX)
-        yield self.env.timeout(TX_TIME)
-        self.harvester.harvest(TX_TIME, self.local_time())
+        yield self.env.timeout(PT_TIME)
+        self.harvester.harvest(PT_TIME, self.local_time())
 
         msg = {
             'id': self.id,
@@ -81,8 +81,8 @@ class Node:
         self.state = State.Receive
         self.harvester.discharge(E_RX)
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
-        yield self.env.timeout(TX_TIME)
-        self.harvester.harvest(TX_TIME, self.local_time())
+        yield self.env.timeout(PT_TIME)
+        self.harvester.harvest(PT_TIME, self.local_time())
 
         sender = msg['id']
         sender_time = msg['time']
