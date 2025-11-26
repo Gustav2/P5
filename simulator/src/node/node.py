@@ -36,9 +36,8 @@ class Node:
             EnergyLogger().log(self.id, self.env.now, self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
-                yield self.env.process(self.listen(self.listen_time / 2))
+                yield self.env.process(self.listen(self.listen_time))
                 yield self.env.process(self.transmit())
-                yield self.env.process(self.listen(self.listen_time / 2))
 
             self.state = State.Idle
 
