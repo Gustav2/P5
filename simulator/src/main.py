@@ -3,7 +3,9 @@ from statistics import mean
 
 from .node.node import Node
 from .core.network import Network
+
 from .core.energy_logger import EnergyLogger
+from .core.network_topology import NetworkTopology
 
 from .config import NODES, SIM_TIME, RANGE
 
@@ -21,7 +23,9 @@ def main():
     print("Avg discovered neighbors:", avg)
     print("Success rate:", avg / (NODES - 1) * 100, "%")
 
-    EnergyLogger().plot()
+    EnergyLogger.plot()
+    topo = NetworkTopology(Network.nodes)
+    topo.save("topology.png")
 
 if __name__ == "__main__":
     main()
