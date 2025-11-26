@@ -21,8 +21,12 @@ E_LISTEN = 0.03564 / 1_000 # Energy used per second to listen to transmission
 E_TX = 0.0594 / 1_000 # Energy used to transmit the packet
 E_RX = E_LISTEN * PT_TIME # Energy used to receive and decode the packet
 
-LISTEN_TIME_RANGE = (500, 1000) # Range for time listening
-CLOCK_DRIFT_RANGE = (-10, 10) # TODO Range for a clock drift
+LISTEN_TIME_RANGE = (500, 1_000) # Range for time listening in milliseconds
+CLOCK_DRIFT_PER_DAY = 800 # Max clock drift per day
+CLOCK_DRIFT_MULTIPLIER_RANGE = (
+    (ONE_DAY - CLOCK_DRIFT_PER_DAY) / ONE_DAY,
+    (ONE_DAY + CLOCK_DRIFT_PER_DAY) / ONE_DAY
+) # Range for time multiplier for current clock drift time range
 
 HIGH_LIGHT_RANGE_LUX = (30, 35) # Number of lux for a high powered device
 LOW_LIGHT_RANGE_LUX = (15, 20) # Number of lux for a low powered device

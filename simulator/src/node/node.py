@@ -17,14 +17,14 @@ class Node:
         self.listen_time = 0
 
         self.neighbors: dict = {}
-        self.clock_drift = random.uniform(*CLOCK_DRIFT_RANGE)
+        self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         Network.register_node(self)
         self.env.process(self.run())
 
     def run(self):
         while True:
-            EnergyLogger().log(self.id, self.env.now, self.harvester.energy)
+            EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             self.listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
             energy_to_use = self.listen_time * E_LISTEN + E_TX + E_RX
@@ -33,7 +33,7 @@ class Node:
             yield self.env.timeout(idle_time)
             self.harvester.harvest(idle_time, self.local_time())
 
-            EnergyLogger().log(self.id, self.env.now, self.harvester.energy)
+            EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
                 yield self.env.process(self.listen(self.listen_time))
@@ -67,7 +67,7 @@ class Node:
 
         msg = {
             'id': self.id,
-            'time': self.local_time() + self.clock_drift,
+            'time': self.local_time(),
         }
 
         Network.broadcast(self, msg)
@@ -96,4 +96,4 @@ class Node:
         self.state = State.Idle
 
     def local_time(self):
-        return self.env.now
+        return math.floor(self.env.now * self.clock_drift)
