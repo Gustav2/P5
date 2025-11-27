@@ -17,9 +17,9 @@ DELAY_RANGE = (10, 50) # Packet delay range in miliseconds
 E_MAX = 8.82 # Maximum used energy
 E_TRESHOLD = 1.62 # Threshold for energy capacity
 E_IDLE =  0.00000495 / 1_000 # Energy used in idle mode
-E_LISTEN = 0.03564 / 1_000 # Energy used per second to listen to transmission
+E_RECEIVE = 0.03564 / 1_000 # Energy used per second in receiveing mode
 E_TX = 0.0594 / 1_000 # Energy used to transmit the packet
-E_RX = E_LISTEN * PT_TIME # Energy used to receive and decode the packet
+E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
 
 LISTEN_TIME_RANGE = (500, 1_000) # Range for time listening in milliseconds
 CLOCK_DRIFT_PER_DAY = 800 # Max clock drift per day

@@ -27,7 +27,7 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             self.listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
-            energy_to_use = self.listen_time * E_LISTEN + E_TX + E_RX
+            energy_to_use = self.listen_time * E_RECEIVE + E_TX + E_RX
             idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
             yield self.env.timeout(idle_time)
@@ -42,12 +42,12 @@ class Node:
             self.state = State.Idle
 
     def listen(self, duration):
-        energy_to_use = E_LISTEN * duration
+        energy_to_use = E_RECEIVE * duration
 
         if self.state != State.Idle or self.harvester.remaining_energy() < energy_to_use:
             return False
 
-        self.state = State.Listen
+        self.state = State.Receive
         self.harvester.discharge(energy_to_use)        
         yield self.env.timeout(duration)
         self.harvester.harvest(duration, self.local_time())
@@ -70,17 +70,16 @@ class Node:
             'time': self.local_time(),
         }
 
+        yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
         self.state = State.Idle
 
     def receive(self, msg):
-        if self.state != State.Listen or self.harvester.remaining_energy() < E_RX:
+        if self.state != State.Receive or self.harvester.remaining_energy() < E_RX:
             return False
         
-        self.state = State.Receive
         self.harvester.discharge(E_RX)
-        yield self.env.timeout(random.uniform(*DELAY_RANGE))
         yield self.env.timeout(PT_TIME)
         self.harvester.harvest(PT_TIME, self.local_time())
 
@@ -93,7 +92,7 @@ class Node:
             "last_meet": self.local_time(),
         }
 
-        self.state = State.Idle
+        self.state = State.Receive
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)

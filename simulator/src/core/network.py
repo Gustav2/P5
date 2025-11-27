@@ -22,7 +22,7 @@ class Network:
         for node in cls.nodes:
             if node.id == sender.id:
                 continue
-            if node.state != State.Listen:
+            if node.state != State.Receive:
                 continue
             if random.random() > PT_LOSS:
                 cls._deliver(node, message)
