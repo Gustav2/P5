@@ -18,7 +18,7 @@ E_MAX = 8.82 # Maximum used energy
 E_TRESHOLD = 1.62 # Threshold for energy capacity
 E_IDLE =  0.00000495 / 1_000 # Energy used in idle mode
 E_RECEIVE = 0.03564 / 1_000 # Energy used per second in receiveing mode
-E_TX = 0.0594 / 1_000 # Energy used to transmit the packet
+E_TX = 0.1023 / 1_000 # Energy used to transmit the packet
 E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
 
 LISTEN_TIME_RANGE = (500, 1_000) # Range for time listening in milliseconds
