@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import math
 
-from ..config import E_TRESHOLD, E_MAX
+from ..config import *
 
 class EnergyLogger:
     enabled = True
@@ -21,7 +22,9 @@ class EnergyLogger:
         if not cls.enabled:
             return
 
-        plt.figure(figsize=(20, 7.5))
+        width = math.floor(SIM_TIME / ONE_DAY)
+        plt.figure(figsize=(max(20, width * 30), 7.5))
+        
         for node_id, records in cls.data.items():
             times, energies = zip(*records)
             plt.plot(times, energies, label=f"Node {node_id}")
@@ -32,7 +35,7 @@ class EnergyLogger:
         plt.xlabel("Time (miliseconds)")
         plt.ylabel("Energy (joules)")
         plt.title("Energy during Simulation")
-        plt.legend(loc='upper right', fontsize='small', ncol=2)
+        plt.legend(loc='upper left', fontsize='small', ncol=2)
         plt.grid(True)
         plt.tight_layout()
         plt.savefig(filename)
