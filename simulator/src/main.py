@@ -23,9 +23,24 @@ def main():
     print("Avg discovered neighbors:", avg)
     print("Success rate:", avg / (NODES - 1) * 100, "%")
 
+    sync_tries = [
+        n.sync_tries
+        for n in nodes
+    ]
+    avg_syncs = mean(sync_tries)
+    print("Avg sync tries:", avg_syncs)
+
+    acks_list = [
+        n.acks_received
+        for n in nodes
+    ]
+    avg_acks = mean(acks_list)
+    print("Avg acks received:", avg_acks)
+
+    print("Sync success rate:", avg_acks / avg_syncs * 100, "%")
+
     EnergyLogger.plot()
-    topo = NetworkTopology(Network.nodes)
-    topo.save("topology.png")
+    NetworkTopology(Network.nodes).save("topology.png")
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ HIGH_POWERED_NODES = 36 # High powered nodes
 NODES = LOW_POWERED_NODES + HIGH_POWERED_NODES # Amount of nodes in the simulation
 
 ONE_DAY = 86_400_000 # Miliseconds in one day
-SIM_TIME = 0.5 * ONE_DAY # Simulation time in miliseconds
+SIM_TIME = 14 * ONE_DAY # Simulation time in miliseconds
 SUNRISE_TIME = 8 * 60 * 60 * 1_000 # Time of sunrise in miliseconds
 SUNSET_TIME = 18 * 60 * 60 * 1_000 # Time of sunset in miliseconds
 IS_DAY_CYCLE = False # Is simulation using day cycle or charges infinitely
@@ -20,6 +20,13 @@ E_IDLE =  0.00000495 / 1_000 # Energy used in idle mode per millisecond
 E_RECEIVE = 0.03564 / 1_000 # Energy used per millisecond in receiveing mode
 E_TX = 0.1023 # Energy used to transmit the packet
 E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
+
+LISTEN_TIME_RANGE = (5_000, 10_000) # Range for time listening in milliseconds
+
+SYNC_INTERVAL = 1 * ONE_DAY # How ofter nodes perform sync
+SYNC_TIME = 30_000 # For how long sync is operated
+SYNC_TIME_RANGE = (2, SYNC_TIME / 2) # For how long node listens for a sync message, before sending one
+SYNC_PREPARATION_TIME = 60 * 60 * 1_000 # For how long before a sync node starts chraging
 
 CLOCK_DRIFT_PER_DAY = 800 # Max clock drift per day
 CLOCK_DRIFT_MULTIPLIER_RANGE = (

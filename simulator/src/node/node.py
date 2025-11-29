@@ -11,12 +11,14 @@ class Node:
         self.id = id
         self.x, self.y = x, y
         self.state: State = State.Idle
-
         self.harvester = Harvester(id)
         self.env = env
+        self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.neighbors: dict = {}
-        self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
+        self.is_sync = False
+        self.sync_tries = 0
+        self.acks_received = 0
 
         Network.register_node(self)
         self.env.process(self.run())
@@ -25,9 +27,24 @@ class Node:
         while True:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
+            # Discovery part
             listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
             energy_to_use = listen_time * E_RECEIVE + E_TX + E_RX
             idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
+
+            # Sync part
+            energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
+            idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync, self.local_time())
+            sync_in = self.soonest_sync()
+
+            # Pick what's sooner and prioritize
+            if sync_in != float('inf') and sync_in - idle_time_for_sync < SYNC_PREPARATION_TIME:
+                self.is_sync = True
+                listen_time = SYNC_TIME
+                energy_to_use = energy_for_sync
+                idle_time = sync_in
+            else:
+                self.is_sync = False
 
             yield self.env.timeout(idle_time)
             self.harvester.harvest(idle_time, self.local_time())
@@ -35,12 +52,13 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
-                listen_process = self.env.process(self.listen(listen_time / 2))
+                listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
+                listen_process = self.env.process(self.listen(listen_for))
                 yield listen_process
                 heard = listen_process.value
                 if not heard:
-                    yield self.env.process(self.transmit(Package.DISC))
-                    yield self.env.process(self.listen(listen_time / 2))
+                    yield self.env.process(self.transmit(Package.SYNC if self.is_sync else Package.DISC))
+                    yield self.env.process(self.listen(listen_time - listen_for))
 
             self.state = State.Idle
 
@@ -68,6 +86,9 @@ class Node:
         yield self.env.timeout(PT_TIME)
         self.harvester.harvest(PT_TIME, self.local_time())
 
+        if package_type == Package.SYNC:
+            self.sync_tries += 1
+
         msg = {
             'type': package_type, 
             'id': self.id,
@@ -93,22 +114,50 @@ class Node:
         offset = math.floor((sender_time + self.local_time()) / 2)
 
         if type == Package.DISC:
-            neighbor = self.neighbors.get(sender)
-            last_meet = self.local_time() if neighbor == None else neighbor['last_meet']
-
             if(
-                neighbor == None or 
-                last_meet + SYNC_INTERVAL <= self.local_time()
+                self.neighbors.get(sender) == None or 
+                self.soonest_sync(sender) < 0
             ):
                 transmit_process = self.env.process(self.transmit(Package.DISC))
                 yield transmit_process
                 if transmit_process.value:
                     self.neighbors[sender] = {
-                        "next_meet": offset + SYNC_INTERVAL,
+                        "delay": offset,
                         "last_meet": self.local_time(),
                     }
+        elif type == Package.SYNC and sender in self.neighbors:
+            time_to_meet = self.soonest_sync(sender)
+            if -SYNC_TIME/2 <= time_to_meet <= SYNC_TIME/2:
+                transmit_process = self.env.process(self.transmit(Package.ACK))
+                yield transmit_process
+                if transmit_process.value:
+                    self.neighbors[sender] = {
+                        "delay": offset,
+                        "last_meet": self.local_time(),
+                    }
+        elif type == Package.ACK:
+            if -SYNC_TIME/2 < self.soonest_sync(sender) < SYNC_TIME/2:
+                self.acks_received += 1
+                self.neighbors[sender] = {
+                    "delay": offset,
+                    "last_meet": self.local_time(),
+                }
 
         return True
+    
+    def soonest_sync(self, node_id = None):
+        meet_in = float('inf')
+
+        for id, neigh in self.neighbors.items():
+            current_meet_in = neigh["delay"] + SYNC_INTERVAL - self.local_time()
+
+            if node_id == id:
+                return current_meet_in
+
+            if current_meet_in > 0 and current_meet_in < meet_in:
+                meet_in = current_meet_in
+
+        return meet_in
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)
