@@ -2,7 +2,7 @@ import simpy, random, math
 
 from ..core.network import Network
 from ..core.energy_logger import EnergyLogger
-from .state import State
+from .state import State, Package
 from .harvester import Harvester
 from ..config import *
 
@@ -14,7 +14,6 @@ class Node:
 
         self.harvester = Harvester(id)
         self.env = env
-        self.listen_time = 0
 
         self.neighbors: dict = {}
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
@@ -26,8 +25,8 @@ class Node:
         while True:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
-            self.listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
-            energy_to_use = self.listen_time * E_RECEIVE + E_TX + E_RX
+            listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
+            energy_to_use = listen_time * E_RECEIVE + E_TX + E_RX
             idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
             yield self.env.timeout(idle_time)
@@ -36,8 +35,12 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
-                yield self.env.process(self.listen(self.listen_time))
-                yield self.env.process(self.transmit())
+                listen_process = self.env.process(self.listen(listen_time / 2))
+                yield listen_process
+                heard = listen_process.value
+                if not heard:
+                    yield self.env.process(self.transmit(Package.DISC))
+                    yield self.env.process(self.listen(listen_time / 2))
 
             self.state = State.Idle
 
@@ -56,8 +59,8 @@ class Node:
 
         return Network.messages_received(self)
 
-    def transmit(self):
-        if self.state != State.Idle or self.harvester.remaining_energy() < E_TX:
+    def transmit(self, package_type: Package):
+        if self.harvester.remaining_energy() < E_TX:
             return False
 
         self.state = State.Transmit
@@ -66,6 +69,7 @@ class Node:
         self.harvester.harvest(PT_TIME, self.local_time())
 
         msg = {
+            'type': package_type, 
             'id': self.id,
             'time': self.local_time(),
         }
@@ -73,7 +77,7 @@ class Node:
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
-        self.state = State.Idle
+        return True
 
     def receive(self, msg):
         if self.state != State.Receive or self.harvester.remaining_energy() < E_RX:
@@ -83,16 +87,28 @@ class Node:
         yield self.env.timeout(PT_TIME)
         self.harvester.harvest(PT_TIME, self.local_time())
 
+        type = Package(msg['type'])
         sender = msg['id']
         sender_time = msg['time']
-        time_offset = sender_time - self.local_time()
+        offset = math.floor((sender_time + self.local_time()) / 2)
 
-        self.neighbors[sender] = {
-            "offset": time_offset,
-            "last_meet": self.local_time(),
-        }
+        if type == Package.DISC:
+            neighbor = self.neighbors.get(sender)
+            last_meet = self.local_time() if neighbor == None else neighbor['last_meet']
 
-        self.state = State.Receive
+            if(
+                neighbor == None or 
+                last_meet + SYNC_INTERVAL <= self.local_time()
+            ):
+                transmit_process = self.env.process(self.transmit(Package.DISC))
+                yield transmit_process
+                if transmit_process.value:
+                    self.neighbors[sender] = {
+                        "next_meet": offset + SYNC_INTERVAL,
+                        "last_meet": self.local_time(),
+                    }
+
+        return True
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)
