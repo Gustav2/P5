@@ -23,7 +23,7 @@ class EnergyLogger:
             return
 
         width = math.floor(SIM_TIME / ONE_DAY)
-        plt.figure(figsize=(max(20, width * 30), 7.5))
+        plt.figure(figsize=(min(max(20, width * 30), 150), 7.5))
         
         for node_id, records in cls.data.items():
             times, energies = zip(*records)
