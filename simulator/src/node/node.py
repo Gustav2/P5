@@ -16,6 +16,7 @@ class Node:
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.neighbors: dict = {}
+        self.listen_process = None
         self.is_sync = False
         self.sync_tries = 0
         self.acks_received = 0
@@ -30,7 +31,6 @@ class Node:
             # Discovery part
             listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
             energy_to_use = listen_time * E_RECEIVE + E_TX + E_RX
-            idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
             # Sync part
             energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
@@ -45,6 +45,7 @@ class Node:
                 idle_time = sync_in
             else:
                 self.is_sync = False
+                idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
             yield self.env.timeout(idle_time)
             self.harvester.harvest(idle_time, self.local_time())
@@ -53,12 +54,27 @@ class Node:
 
             if self.harvester.remaining_energy() >= energy_to_use:
                 listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
-                listen_process = self.env.process(self.listen(listen_for))
-                yield listen_process
-                heard = listen_process.value
+                self.listen_process = self.env.process(self.listen(listen_for))
+
+                heard = True
+                try:
+                    yield self.listen_process
+                    heard = self.listen_process.value
+                except simpy.Interrupt:
+                    pass
+                finally:
+                    self.listen_process = None
+                
                 if not heard:
                     yield self.env.process(self.transmit(Package.SYNC if self.is_sync else Package.DISC))
-                    yield self.env.process(self.listen(listen_time - listen_for))
+                    
+                    self.listen_process = self.env.process(self.listen(listen_time - listen_for))
+                    try:
+                        yield self.listen_process
+                    except simpy.Interrupt:
+                        pass
+                    finally:
+                        self.listen_process = None
 
             self.state = State.Idle
 
@@ -135,6 +151,8 @@ class Node:
                         "delay": offset,
                         "last_meet": self.local_time(),
                     }
+                    if self.listen_process:
+                        self.listen_process.interrupt('ack_received')
         elif type == Package.ACK:
             if -SYNC_TIME/2 < self.soonest_sync(sender) < SYNC_TIME/2:
                 self.acks_received += 1
@@ -142,6 +160,8 @@ class Node:
                     "delay": offset,
                     "last_meet": self.local_time(),
                 }
+                if self.listen_process:
+                    self.listen_process.interrupt('ack_received')
 
         return True
     
