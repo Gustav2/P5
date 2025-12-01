@@ -1,5 +1,6 @@
 import simpy, random
 from statistics import mean
+from tqdm import tqdm
 
 from .node.node import Node
 from .core.network import Network
@@ -16,7 +17,14 @@ def main():
     for n in nodes:
         Network.register_node(n)
 
-    env.run(until=SIM_TIME)
+    # Run with progress bar
+    with tqdm(total=SIM_TIME, desc="Simulating", unit="time") as pbar:
+        last_time = 0
+        while env.now < SIM_TIME:
+            env.step()
+            if int(env.now) > last_time:
+                pbar.update(int(env.now) - last_time)
+                last_time = int(env.now)
 
     discovered_neighs = [len(n.neighbors) for n in nodes]
     avg = mean(discovered_neighs)
