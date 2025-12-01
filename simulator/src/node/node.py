@@ -4,6 +4,7 @@ from ..core.network import Network
 from ..core.energy_logger import EnergyLogger
 from .state import State
 from .harvester import Harvester
+from .kpi import KPI
 from ..config import *
 
 class Node:
@@ -11,6 +12,8 @@ class Node:
         self.id = id
         self.x, self.y = x, y
         self.state: State = State.Idle
+
+        self.kpi = KPI()
 
         self.harvester = Harvester(id)
         self.env = env
@@ -36,8 +39,10 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
+                self.kpi.start_discovery(self.local_time())
                 yield self.env.process(self.listen(self.listen_time))
                 yield self.env.process(self.transmit())
+                self.kpi.send_discovery(self.listen_time)
 
             self.state = State.Idle
 
@@ -91,6 +96,8 @@ class Node:
             "offset": time_offset,
             "last_meet": self.local_time(),
         }
+
+        self.kpi.receive_discovery(self.local_time())
 
         self.state = State.Receive
 
