@@ -141,6 +141,8 @@ class Node:
                         "delay": offset,
                         "last_meet": self.local_time(),
                     }
+                    if self.listen_process:
+                        self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:
             time_to_meet = self.soonest_sync(sender)
             if -SYNC_TIME/2 <= time_to_meet <= SYNC_TIME/2:
