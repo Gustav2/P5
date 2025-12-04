@@ -13,9 +13,6 @@ from .config import NODES, SIM_TIME, RANGE
 def main():
     env = simpy.Environment()
     nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
-    
-    for n in nodes:
-        Network.register_node(n)
 
     chunk_size = SIM_TIME // 20 
     with tqdm(total=SIM_TIME, desc="Simulating", unit="time") as pbar:
@@ -25,26 +22,19 @@ def main():
 
     discovered_neighs = [len(n.neighbors) for n in nodes]
     avg = mean(discovered_neighs)
-    print("Avg discovered neighbors:", avg)
-    print("Discovery success rate:", avg / (NODES - 1) * 100, "%")
 
-    sync_tries = [
-        n.sync_tries
-        for n in nodes
-    ]
-    avg_syncs = mean(sync_tries)
-    print("Avg sync tries:", avg_syncs)
+    total_syncs = sum(n.sync_tries for n in nodes)
+    total_acks_sent = sum(n.acks_sent for n in nodes)
+    total_acks_received = sum(n.acks_received for n in nodes)
 
-    acks_list = [
-        n.acks_received
-        for n in nodes
-    ]
-    avg_acks = mean(acks_list)
-    print("Avg acks received:", avg_acks)
+    print(f"Avg discovered neighbors: {avg}")
+    print(F"Discovery success rate: {avg / (NODES - 1) * 100} %\n")
+    print(f"Total SYNCs sent: {total_syncs}")
+    print(f"Total ACKs sent: {total_acks_sent}")
+    print(f"Total ACKs received: {total_acks_received}\n")
+    print(f"Avg ACKs per SYNC: {(total_acks_received / total_syncs * 100) if total_syncs > 0 else 0} %")
 
-    print("Sync success rate:", (avg_acks / avg_syncs * 100) if avg_syncs > 0 else 0, "%")
-
-    EnergyLogger.plot()
+    #EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()
 
 if __name__ == "__main__":
