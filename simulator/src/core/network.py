@@ -36,4 +36,4 @@ class Network:
     def messages_received(cls, node: "Node"):
         temp = cls.mailboxes[node.id]
         cls.mailboxes[node.id] = []
-        return len(temp) > 0
+        return temp
