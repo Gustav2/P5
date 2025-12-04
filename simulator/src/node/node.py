@@ -154,7 +154,7 @@ class Node:
                         "last_meet": self.local_time(),
                     }
                     if self.listen_process:
-                        self.listen_process.interrupt('ack_received')
+                        self.listen_process.interrupt('ack_sent')
         elif type == Package.ACK:
             if -SYNC_TIME/2 < self.soonest_sync(sender) < SYNC_TIME/2:
                 self.acks_received += 1

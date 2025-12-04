@@ -13,9 +13,6 @@ from .config import NODES, SIM_TIME, RANGE
 def main():
     env = simpy.Environment()
     nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
-    
-    for n in nodes:
-        Network.register_node(n)
 
     chunk_size = SIM_TIME // 20 
     with tqdm(total=SIM_TIME, desc="Simulating", unit="time") as pbar:
