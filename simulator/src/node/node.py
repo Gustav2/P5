@@ -18,10 +18,8 @@ class Node:
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.neighbors: dict = {}
+        self.sync_cycles = []
         self.sync_with = []
-        self.sync_tries = 0
-        self.acks_received = 0
-        self.acks_sent = 0
 
         Network.register_node(self)
         self.env.process(self.run())
@@ -38,7 +36,6 @@ class Node:
             energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
             idle_time_for_sync = self.capacitor.time_to_charge_to(energy_for_sync)
             sync_in = self.soonest_sync()
-            self.update_upcoming_sync_nodes()
 
             is_sync = False
 
@@ -65,9 +62,16 @@ class Node:
                 heard = len(messages) > 0 # type: ignore
 
                 if is_sync:
+                    self.update_upcoming_sync_nodes()
                     sync_partners = set(self.sync_with)
+                    self.sync_cycles.append({
+                        "nodes": len(sync_partners), 
+                        "sync_received": 0, 
+                        "acks_received": 0
+                    })
+
                     for msg in messages: # type: ignore
-                        if msg['id'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
+                        if msg['from'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
                             heard = True
                             break
                     heard = False
@@ -78,6 +82,7 @@ class Node:
                     ))
                     yield self.env.process(self.listen(listen_time - listen_for))
 
+            self.sync_with = []
             self.state = State.Idle
 
     def listen(self, duration):
@@ -97,7 +102,7 @@ class Node:
 
         return Network.messages_received(self)
 
-    def transmit(self, package_type: Package, to = None):
+    def transmit(self, package_type: Package, to):
         if self.capacitor.remaining_energy() < E_TX:
             return False
 
@@ -106,20 +111,12 @@ class Node:
         yield self.env.timeout(PT_TIME)
         self.capacitor.harvest(PT_TIME)
 
-        if package_type == Package.SYNC:
-            # TODO fix the calulations
-            self.sync_tries += len(self.sync_with)
-        if package_type == Package.ACK:
-            self.acks_sent += 1
-
         msg = {
             'type': package_type, 
-            'id': self.id,
+            'from': self.id,
+            'to': to,
             'time': self.local_time(),
         }
-
-        if to != None:
-            msg["to"] = to
 
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
@@ -135,15 +132,15 @@ class Node:
         self.capacitor.harvest(PT_TIME)
 
         type = Package(msg['type'])
-        sender = msg['id']
+        sender = msg['from']
         sender_time = msg['time']
-        to = msg.get('to')
+        to = msg['to']
         offset = math.floor((sender_time + self.local_time()) / 2)
 
         meet_in = self.soonest_sync(sender)
 
         if type == Package.DISC:
-            if(self.neighbors.get(sender) == None or meet_in < 0):
+            if self.neighbors.get(sender) == None or meet_in < 0:
                 if to != None and to != self.id:
                     return False
                 
@@ -161,9 +158,10 @@ class Node:
                     }
         elif type == Package.SYNC and sender in self.neighbors:
             if to == self.id or sender in self.sync_with:
+                self.sync_cycles[-1]["sync_received"] += 1
+
                 transmit_process = self.env.process(self.transmit(Package.ACK, sender))
                 yield transmit_process
-
                 if transmit_process.value:
                     self.neighbors[sender] = {
                         "offset": offset,
@@ -171,7 +169,8 @@ class Node:
                     }
         elif type == Package.ACK:
             if to == self.id or sender in self.sync_with:
-                self.acks_received += 1
+                self.sync_cycles[-1]["acks_received"] += 1
+
                 self.neighbors[sender] = {
                     "offset": offset,
                     "last_meet": self.local_time(),

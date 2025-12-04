@@ -23,18 +23,17 @@ def main():
     discovered_neighs = [len(n.neighbors) for n in nodes]
     avg = mean(discovered_neighs)
 
-    total_syncs = sum(n.sync_tries for n in nodes)
-    total_acks_sent = sum(n.acks_sent for n in nodes)
-    total_acks_received = sum(n.acks_received for n in nodes)
+    synced_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
+    total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
+    total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
 
     print(f"Avg discovered neighbors: {avg}")
     print(F"Discovery success rate: {avg / (NODES - 1) * 100} %\n")
-    print(f"Total SYNCs sent: {total_syncs}")
-    print(f"Total ACKs sent: {total_acks_sent}")
-    print(f"Total ACKs received: {total_acks_received}\n")
-    print(f"Avg ACKs per SYNC: {(total_acks_received / total_syncs * 100) if total_syncs > 0 else 0} %")
+    print(f"Total SYNCs received: {total_sync}")
+    print(f"Total ACKs received: {total_ack}")
+    print(f"Avg ACKs per SYNC: {(total_sync + total_ack) / synced_with * 100} %")
 
-    #EnergyLogger.plot(chunks_days=2)
+    EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()
 
 if __name__ == "__main__":
