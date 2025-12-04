@@ -12,9 +12,6 @@ from .config import NODES, SIM_TIME, RANGE
 def main():
     env = simpy.Environment()
     nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
-    
-    for n in nodes:
-        Network.register_node(n)
 
     env.run(until=SIM_TIME)
 
