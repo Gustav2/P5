@@ -5,5 +5,5 @@ venv/
 .vscode/
 __pycache__
 
-energy_plot.png
+energy_plots
 topology.png
