@@ -9,7 +9,7 @@ SUNRISE_TIME = 8 * 60 * 60 * 1_000 # Time of sunrise in miliseconds
 SUNSET_TIME = 18 * 60 * 60 * 1_000 # Time of sunset in miliseconds
 IS_DAY_CYCLE = False # Is simulation using day cycle or charges infinitely
 
-PT_TIME = 15.94 # Time in miliseconds used for decoding an incoming packet
+PT_TIME = 14.89 # Time in miliseconds used for decoding an incoming packet
 PT_LOSS = 0.1 # Chance of loosing a packet
 DELAY_RANGE = (10, 50) # Packet delay range in miliseconds
 
