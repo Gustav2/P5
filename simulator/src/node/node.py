@@ -7,6 +7,11 @@ from ..core.energy_logger import EnergyLogger
 
 from ..config import *
 
+# * The issue with mutliple node syncing in the same time is that the tables are different
+# * So node A might have [B, C, D]
+# * But Node D just [B]
+# * So A or C are not able to connect to D, even though it's in their window
+
 class Node:
     def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
         self.id = id
@@ -200,15 +205,12 @@ class Node:
             return self.sync_with
         
         current_time = self.local_time()
-        window_end = soonest + SYNC_TIME
         
         for node_id, neigh in self.neighbors.items():
             meet_in = neigh["offset"] + SYNC_INTERVAL - current_time
             
-            if soonest <= meet_in <= window_end:
+            if soonest - SYNC_TIME/2 <= meet_in <= soonest + SYNC_TIME/2:
                 self.sync_with.append(node_id)
-        
-        return self.sync_with
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)
