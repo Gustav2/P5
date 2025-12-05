@@ -35,7 +35,7 @@ class Node:
             # Sync part
             energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
             idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync, self.local_time())
-            sync_in = self.soonest_sync()
+            (sync_with, sync_in) = self.soonest_sync()
 
             # Pick what's sooner and prioritize
             if sync_in != float('inf') and sync_in - idle_time_for_sync < SYNC_PREPARATION_TIME:
@@ -66,7 +66,10 @@ class Node:
                     self.listen_process = None
                 
                 if not heard:
-                    yield self.env.process(self.transmit(Package.SYNC if self.is_sync else Package.DISC))
+                    yield self.env.process(
+                        self.transmit(Package.SYNC if self.is_sync else Package.DISC, 
+                        sync_with if self.is_sync else None
+                    ))
                     
                     self.listen_process = self.env.process(self.listen(listen_time - listen_for))
                     try:
@@ -93,7 +96,7 @@ class Node:
 
         return Network.messages_received(self)
 
-    def transmit(self, package_type: Package):
+    def transmit(self, package_type: Package, to):
         if self.harvester.remaining_energy() < E_TX:
             return False
 
@@ -108,6 +111,7 @@ class Node:
         msg = {
             'type': package_type, 
             'id': self.id,
+            "to": to,
             'time': self.local_time(),
         }
 
@@ -127,14 +131,14 @@ class Node:
         type = Package(msg['type'])
         sender = msg['id']
         sender_time = msg['time']
+        receiver = msg['to']
         offset = math.floor((sender_time + self.local_time()) / 2)
 
+        (sync_with, time_to_meet) = self.soonest_sync(sender)
+
         if type == Package.DISC:
-            if(
-                self.neighbors.get(sender) == None or 
-                self.soonest_sync(sender) < 0
-            ):
-                transmit_process = self.env.process(self.transmit(Package.DISC))
+            if(self.neighbors.get(sender) == None or time_to_meet < 0):
+                transmit_process = self.env.process(self.transmit(Package.DISC, None))
                 yield transmit_process
                 if transmit_process.value:
                     self.neighbors[sender] = {
@@ -144,9 +148,8 @@ class Node:
                     if self.listen_process:
                         self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:
-            time_to_meet = self.soonest_sync(sender)
-            if -SYNC_TIME/2 <= time_to_meet <= SYNC_TIME/2:
-                transmit_process = self.env.process(self.transmit(Package.ACK))
+            if self.id == receiver:
+                transmit_process = self.env.process(self.transmit(Package.ACK, sender))
                 yield transmit_process
                 if transmit_process.value:
                     self.neighbors[sender] = {
@@ -156,7 +159,7 @@ class Node:
                     if self.listen_process:
                         self.listen_process.interrupt('ack_sent')
         elif type == Package.ACK:
-            if -SYNC_TIME/2 < self.soonest_sync(sender) < SYNC_TIME/2:
+            if self.id == receiver:
                 self.acks_received += 1
                 self.neighbors[sender] = {
                     "delay": offset,
@@ -169,17 +172,19 @@ class Node:
     
     def soonest_sync(self, node_id = None):
         meet_in = float('inf')
+        meet_with = -1
 
         for id, neigh in self.neighbors.items():
             current_meet_in = neigh["delay"] + SYNC_INTERVAL - self.local_time()
 
             if node_id == id:
-                return current_meet_in
+                return (node_id, current_meet_in)
 
             if current_meet_in > 0 and current_meet_in < meet_in:
                 meet_in = current_meet_in
+                meet_with = id
 
-        return meet_in
+        return (meet_with, meet_in)
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)
