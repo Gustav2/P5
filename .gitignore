@@ -8,3 +8,6 @@ __pycache__
 **/.DS_Store
 energy_plot.png
 topology.png
+success_vs_days.png
+latency_vs_days.png
+energy_vs_days.png

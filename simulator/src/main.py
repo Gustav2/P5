@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import simpy, random
 from statistics import mean
 
@@ -38,6 +39,7 @@ def simulate():
 
 def evaluation(runs,duration_days):
     original_sim_time = SIM_TIME
+    results = {}
     #please give me a better name for these lists
     #I like the names, dont udermine your work :)
     for days in duration_days:
@@ -73,14 +75,50 @@ def evaluation(runs,duration_days):
         print(f"Energy per Successful Neighbour Discovery: N/A")
         print(f"Discovery Latency: {avg_time_average} s")
         print(f"Discovery Success Rate: {avg_success_average} %")
+        
+        results[days] = (e_per_cycle_average, avg_time_average, avg_success_average)
     
     globals()['SIM_TIME'] = original_sim_time #We set the value back to the original, since everything else runs on that set time, we just "except" this for our use, to then set it back
+    return results
 
+def plot_results(results): #New function bcs Andris plotting function won't work, and better to have a spearate one.
+    days = list(results.keys())
+    e_vals = [results[d][0] for d in days]
+    t_vals = [results[d][1] for d in days]
+    s_vals = [results[d][2] for d in days]
+
+    # Energy Graph
+    plt.figure()
+    plt.plot(days, e_vals, marker='o',color='orange')
+    plt.title("Energy Consumption per Discovery Cycle vs Duration")
+    plt.xlabel("Simulation Duration (days)")
+    plt.ylabel("Energy (J)")
+    plt.grid(True)
+    plt.savefig("energy_vs_days.png")
+
+    # Latency Graph
+    plt.figure()
+    plt.plot(days, t_vals, marker='o',color='red')
+    plt.title("Discovery Latency vs Duration")
+    plt.xlabel("Simulation Duration (days)")
+    plt.ylabel("Latency (s)")
+    plt.grid(True)
+    plt.savefig("latency_vs_days.png")
+
+    # Success Rate Graph
+    plt.figure()
+    plt.plot(days, s_vals, marker='o')
+    plt.title("Discovery Success Rate vs Duration")
+    plt.xlabel("Simulation Duration (days)")
+    plt.ylabel("Success Rate (%)")
+    plt.grid(True)
+    plt.savefig("success_vs_days.png")
 
 if __name__ == "__main__":
-    durations_to_test = [14, 25] #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
+    durations_to_test = [1,5,10,15,20,25,30,40,50,60] #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
     number_of_cycles=1 #Also be careful lol
-    evaluation(number_of_cycles,durations_to_test)
+    res=evaluation(number_of_cycles,durations_to_test)
+    plot_results(res)
 
     #results = evaluate_multiple_durations(durations_to_test, runs_per_duration=4)
 
