@@ -76,11 +76,12 @@ class Node:
                             "acks_received": 0
                         })
 
+                        heard = False
+                        
                         for msg in messages: # type: ignore
                             if msg['from'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
                                 heard = True
                                 break
-                        heard = False
 
                 if not heard:
                     yield self.env.process(self.transmit(
@@ -141,7 +142,6 @@ class Node:
         sender = msg['from']
         sender_time = msg['time']
         to = msg['to']
-        offset = math.floor((sender_time + self.local_time()) / 2)
 
         meet_in = self.soonest_sync(sender)
 
@@ -151,43 +151,38 @@ class Node:
                     return False
                 
                 update_table = True
-
                 if to == None:
                     transmit_process = self.env.process(self.transmit(Package.DISC, sender))
                     yield transmit_process
                     update_table = transmit_process.value
                     
                 if update_table:
-                    self.neighbors[sender] = {
-                        "offset": offset,
-                        "last_meet": self.local_time(),
-                    }
+                    self.update_neighbor(sender, sender_time)
         elif type == Package.SYNC and sender in self.neighbors:
             if self.is_sync and len(self.sync_cycles):
                 self.sync_cycles[-1]["sync_received"] += 1
 
                 transmit_process = self.env.process(self.transmit(Package.ACK, sender))
                 yield transmit_process
+
                 if transmit_process.value:
-                    self.neighbors[sender] = {
-                        "offset": offset,
-                        "last_meet": self.local_time(),
-                    }
+                    self.update_neighbor(sender, sender_time)
         elif type == Package.ACK:
             if to == self.id or sender in self.sync_with:
                 self.sync_cycles[-1]["acks_received"] += 1
-                self.neighbors[sender] = {
-                    "offset": offset,
-                    "last_meet": self.local_time(),
-                }
+                self.update_neighbor(sender, sender_time)
 
         return True
     
-    def soonest_sync(self, node_id = None):
+    def soonest_sync(self, node_id=None):
         meet_in = float('inf')
+        current_time = self.local_time()
 
         for id, neigh in self.neighbors.items():
-            current_meet_in = neigh["offset"] + SYNC_INTERVAL - self.local_time()
+            drift_rate = self.estimate_drift(id)
+            
+            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            current_meet_in = my_sync_time - current_time
 
             if node_id == id:
                 return current_meet_in
@@ -196,15 +191,62 @@ class Node:
                 meet_in = current_meet_in
 
         return meet_in
-    
+        
+    def update_neighbor(self, sender, sender_time):
+        my_time = self.local_time()
+        
+        if self.neighbors.get(sender) is None:
+            self.neighbors[sender] = {
+                "meet_points": [(my_time, sender_time)],
+                "last_meet_mine": my_time,
+                "last_meet_their": sender_time,
+            }
+        else:
+            neigh = self.neighbors[sender]
+            neigh["meet_points"].append((my_time, sender_time))
+            
+            if len(neigh["meet_points"]) > 8:
+                neigh["meet_points"].pop(0)
+            
+            neigh["last_meet_mine"] = my_time
+            neigh["last_meet_their"] = sender_time
+
+    def estimate_drift(self, id):
+        points = self.neighbors[id]["meet_points"]
+        if len(points) < 2:
+            return 1.0
+        
+        n = len(points)
+        sum_x = sum(p[0] for p in points)
+        sum_y = sum(p[1] for p in points)
+        sum_xy = sum(p[0] * p[1] for p in points)
+        sum_xx = sum(p[0] ** 2 for p in points)
+        
+        denominator = n * sum_xx - sum_x ** 2
+        if denominator == 0:
+            return 1.0
+        
+        drift_rate = (n * sum_xy - sum_x * sum_y) / denominator
+        
+        if drift_rate <= 0 or drift_rate > 2.0:
+            return 1.0
+        
+        return drift_rate
+
     def update_upcoming_sync_nodes(self):
         self.sync_with = []
         
         soonest = self.soonest_sync()
+        if soonest == float('inf'):
+            return
+        
         current_time = self.local_time()
         
         for node_id, neigh in self.neighbors.items():
-            meet_in = neigh["offset"] + SYNC_INTERVAL - current_time
+            drift_rate = neigh.get("drift_rate", 1.0)
+            
+            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            meet_in = my_sync_time - current_time
             
             if soonest - SYNC_TIME/2 <= meet_in <= soonest + SYNC_TIME/2:
                 self.sync_with.append(node_id)
