@@ -7,11 +7,6 @@ from ..core.energy_logger import EnergyLogger
 
 from ..config import *
 
-# * The issue with mutliple node syncing in the same time is that the tables are different
-# * So node A might have [B, C, D]
-# * But Node D just [B]
-# * So A or C are not able to connect to D, even though it's in their window
-
 class Node:
     def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
         self.id = id
@@ -23,6 +18,8 @@ class Node:
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.neighbors: dict = {}
+        self.is_sync = False
+        self.syncs_initiated = 0
         self.sync_cycles = []
         self.sync_with = []
 
@@ -42,11 +39,11 @@ class Node:
             idle_time_for_sync = self.capacitor.time_to_charge_to(energy_for_sync)
             sync_in = self.soonest_sync()
 
-            is_sync = False
+            self.is_sync = False
 
             # Pick what's sooner and prioritize
             if sync_in != float('inf') and 0 < sync_in - idle_time_for_sync < SYNC_PREPARATION_TIME:
-                is_sync = True
+                self.is_sync = True
                 listen_time = SYNC_TIME
                 energy_to_use = energy_for_sync
                 idle_time = sync_in
@@ -59,31 +56,35 @@ class Node:
             EnergyLogger.log(self.id, self.local_time(), self.capacitor.energy)
 
             if self.capacitor.remaining_energy() >= energy_to_use:
-                listen_for = random.uniform(*SYNC_TIME_RANGE) if is_sync else (listen_time / 2)
+                listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
                 listen_process = self.env.process(self.listen(listen_for))
                 yield listen_process
 
                 messages = listen_process.value
                 heard = len(messages) > 0 # type: ignore
 
-                if is_sync:
+                if self.is_sync:
                     self.update_upcoming_sync_nodes()
-                    sync_partners = set(self.sync_with)
-                    self.sync_cycles.append({
-                        "nodes": len(sync_partners), 
-                        "sync_received": 0, 
-                        "acks_received": 0
-                    })
+                    if len(self.sync_with) == 0:
+                        self.is_sync = False
+                    else:
+                        self.syncs_initiated += 1
+                        sync_partners = set(self.sync_with)
+                        self.sync_cycles.append({
+                            "nodes": len(sync_partners), 
+                            "sync_received": 0, 
+                            "acks_received": 0
+                        })
 
-                    for msg in messages: # type: ignore
-                        if msg['from'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
-                            heard = True
-                            break
-                    heard = False
+                        for msg in messages: # type: ignore
+                            if msg['from'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
+                                heard = True
+                                break
+                        heard = False
 
                 if not heard:
                     yield self.env.process(self.transmit(
-                        Package.SYNC if is_sync else Package.DISC, self.sync_with[0] if is_sync else None
+                        Package.SYNC if self.is_sync else Package.DISC, self.sync_with[0] if self.is_sync else None
                     ))
                     yield self.env.process(self.listen(listen_time - listen_for))
 
@@ -107,7 +108,7 @@ class Node:
 
         return Network.messages_received(self)
 
-    def transmit(self, package_type: Package, to):
+    def transmit(self, package_type: Package, to):  
         if self.capacitor.remaining_energy() < E_TX:
             return False
 
@@ -162,7 +163,7 @@ class Node:
                         "last_meet": self.local_time(),
                     }
         elif type == Package.SYNC and sender in self.neighbors:
-            if to == self.id or sender in self.sync_with:
+            if self.is_sync and len(self.sync_cycles):
                 self.sync_cycles[-1]["sync_received"] += 1
 
                 transmit_process = self.env.process(self.transmit(Package.ACK, sender))
@@ -175,7 +176,6 @@ class Node:
         elif type == Package.ACK:
             if to == self.id or sender in self.sync_with:
                 self.sync_cycles[-1]["acks_received"] += 1
-
                 self.neighbors[sender] = {
                     "offset": offset,
                     "last_meet": self.local_time(),
@@ -201,9 +201,6 @@ class Node:
         self.sync_with = []
         
         soonest = self.soonest_sync()
-        if soonest == float('inf'):
-            return self.sync_with
-        
         current_time = self.local_time()
         
         for node_id, neigh in self.neighbors.items():

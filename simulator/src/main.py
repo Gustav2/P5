@@ -21,17 +21,19 @@ def main():
             pbar.update(chunk_size)
 
     discovered_neighs = [len(n.neighbors) for n in nodes]
-    avg = mean(discovered_neighs)
 
+    print(f"Avg discovered neighbors: {mean(discovered_neighs)}")
+    print(F"Discovery success rate: {mean(discovered_neighs) / (NODES - 1) * 100:.1f} %\n")
+
+    total_initiated = sum(n.syncs_initiated for n in nodes)
     tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
     total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
     total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
 
-    print(f"Avg discovered neighbors: {avg}")
-    print(F"Discovery success rate: {avg / (NODES - 1) * 100} %\n")
     print(f"Total SYNCs received: {total_sync}")
     print(f"Total ACKs received: {total_ack}")
-    print(f"Avg ACKs per SYNC: {(total_sync + total_ack) / tried_sync_with * 100} %")
+    print(f"ACKs per SYNC/ACK rate: {(total_sync + total_ack) / tried_sync_with * 100:.1f} %")
+    print(f"ACKs per SYNCs rate: {(total_sync + total_ack) / total_initiated * 100:.1f}%")
 
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()
