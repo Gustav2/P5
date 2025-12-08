@@ -150,7 +150,9 @@ class Node:
         (_, time_to_meet) = self.soonest_sync(sender)
 
         if type == Package.DISC:
+            self.kpi.receive_discovery(self.listen_time, self.local_time())
             if(self.neighbors.get(sender) == None or time_to_meet < 0):
+                self.kpi.receive_disc_ack(self.listen_time)
                 transmit_process = self.env.process(self.transmit(Package.DISC, None))
                 yield transmit_process
                 if transmit_process.value:
@@ -158,8 +160,6 @@ class Node:
                         "delay": offset,
                         "last_meet": self.local_time(),
                     }
-                    self.kpi.receive_disc_ack(self.listen_time)
-                    self.kpi.receive_discovery(self.local_time())
                     if self.listen_process:
                         self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:

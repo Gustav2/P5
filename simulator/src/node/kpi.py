@@ -23,13 +23,13 @@ class KPI:
     def send_discovery(self, listen_time):
         self.disc_sent += 1
 
-        listen_e = listen_time * E_RECEIVE
+        listen_e = listen_time / 2 * E_RECEIVE
         self.disc_e_send += listen_e + E_TX
         self.disc_e_receive += listen_e
 
-    def receive_discovery(self, local_time):
+    def receive_discovery(self, listen_time, local_time):
         self.disc_received += 1
-        self.disc_e_receive += E_RX
+        self.disc_e_receive += listen_time / 2 * E_RECEIVE + E_RX
 
         if self.disc_first_time == 0:
             self.disc_first_time = local_time
