@@ -7,7 +7,7 @@ ONE_DAY = 86_400_000 # Miliseconds in one day
 SIM_TIME = 7 * ONE_DAY # Simulation time in miliseconds
 
 PT_TIME = 14.89 # Time in miliseconds used for decoding an incoming packet
-PT_LOSS = 0.005 # Chance of loosing a packets
+PT_LOSS = 0.05 # Chance of loosing a packets
 DELAY_RANGE = (10, 50) # Packet delay range in miliseconds
 
 # All the energy is Joules or Joules/miliseconds
