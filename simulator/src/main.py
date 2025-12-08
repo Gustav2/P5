@@ -20,20 +20,25 @@ def main():
             env.run(until=min(t + chunk_size, SIM_TIME))
             pbar.update(chunk_size)
 
-    discovered_neighs = [len(n.neighbors) for n in nodes]
+    kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
 
-    print(f"Avg discovered neighbors: {mean(discovered_neighs)}")
-    print(F"Discovery success rate: {mean(discovered_neighs) / (NODES - 1) * 100:.1f} %\n")
+    e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
+    success_disc_e = mean([n.kpi.get_success_disc_e() for n in nodes])
+
+    print(f"Energy usage per DISC cycle: {e_per_cycle} J")
+    print(f"Time till first DISC receive: {avg_time} sec")
+    print(f"Energy per successfull DISC cycle: {success_disc_e} J")
+    print(f"DISC success rate: {avg_success} %")
 
     total_initiated = sum(n.syncs_initiated for n in nodes)
     tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
     total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
     total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
 
-    print(f"Total SYNCs received: {total_sync}")
-    print(f"Total ACKs received: {total_ack}")
-    print(f"ACKs per SYNC/ACK rate: {(total_sync + total_ack) / tried_sync_with * 100:.1f} %")
+    print(f"Avg SYNCs tries: {mean(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)}")
+    print(f"Avg ACKs received: {mean(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)}")
     print(f"ACKs per SYNCs rate: {(total_sync + total_ack) / total_initiated * 100:.1f}%")
+    print(f"ACKs per SYNC/ACK rate: {(total_sync + total_ack) / tried_sync_with * 100:.1f} %")
 
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()

@@ -3,6 +3,7 @@ import simpy, random, math
 from ..core.network import Network
 from .state import State, Package
 from .capacitor import Capacitor
+from .kpi import KPI
 from ..core.energy_logger import EnergyLogger
 
 from ..config import *
@@ -22,6 +23,9 @@ class Node:
         self.syncs_initiated = 0
         self.sync_cycles = []
         self.sync_with = []
+
+        self.listen_time = 0
+        self.kpi = KPI()
 
         Network.register_node(self)
         self.env.process(self.run())
@@ -50,12 +54,17 @@ class Node:
             else:
                 idle_time = self.capacitor.time_to_charge_to(energy_to_use)
 
+            self.listen_time = listen_time
+
             yield self.env.timeout(idle_time)
             self.capacitor.harvest(idle_time)
 
             EnergyLogger.log(self.id, self.local_time(), self.capacitor.energy)
 
             if self.capacitor.remaining_energy() >= energy_to_use:
+                if not self.is_sync:
+                    self.kpi.start_discovery(listen_time, self.local_time())
+                
                 listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
                 listen_process = self.env.process(self.listen(listen_for))
                 yield listen_process
@@ -157,6 +166,7 @@ class Node:
                     update_table = transmit_process.value
                     
                 if update_table:
+                    self.kpi.receive_disc_ack(self.listen_time, self.local_time())
                     self.update_neighbor(sender, sender_time)
         elif type == Package.SYNC and sender in self.neighbors:
             if self.is_sync and len(self.sync_cycles):
