@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import simpy, random
 from statistics import mean
+import numpy as np
+from numpy.polynomial import polynomial as P
+from scipy.optimize import curve_fit
 
 from .node.node import Node
 from .core.network import Network
@@ -101,17 +104,43 @@ def plot_results(results): #New function bcs Andris plotting function won't work
     plt.grid(True)
     plt.savefig("success_vs_days.png")
 
-    # Success of all runs graph - this graph is not done at all
+    # Success of all runs graph with regression
     plt.figure()
-    plt.plot(days, s_list, marker='o')
-    plt.title("Discovery Success Rate vs Duration")
+    
+    # Plot each run as a separate line
+    for run_index, day_success_rates in enumerate(zip(*s_list)):
+        plt.plot(days, day_success_rates, alpha=0.6, label=f'Run {run_index+1}')
+    
+    # Fit exponential decay regression on all individual data points
+    all_runs_data = []
+    x_vals = []
+    for day, success_rates in zip(days, s_list):
+        for success_rate in success_rates:
+            x_vals.append(day)
+            all_runs_data.append(success_rate)
+    
+    # Fit exponential decay regression: y = a * (1 - exp(-b*x)) + c
+    def exponential_model(x, a, b, c):
+        return a * (1 - np.exp(-b * x)) + c
+    
+    try:
+        popt, _ = curve_fit(exponential_model, x_vals, all_runs_data, p0=[100, 0.1, 0], maxfev=5000)
+        x_smooth = np.linspace(min(days), max(days), 100)
+        y_smooth = exponential_model(x_smooth, *popt)
+        plt.plot(x_smooth, y_smooth, 'r-', linewidth=2.5, label='Exponential fit')
+    except:
+        plt.plot([], [], 'r-', linewidth=2.5, label='Exponential fit (failed)')
+    
+    plt.title("Discovery Success Rate (All Runs) vs Duration")
     plt.xlabel("Simulation Duration (days)")
     plt.ylabel("Success Rate (%)")
+    plt.legend()
     plt.grid(True)
     plt.savefig("success_list_vs_days.png")
 
 if __name__ == "__main__":
-    durations_to_test = [1,2,3,4,5] #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
+
+    durations_to_test = list(range(1,61)) #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
     number_of_cycles=3 #Also be careful lol
     res=evaluation(number_of_cycles,durations_to_test)
     plot_results(res)
