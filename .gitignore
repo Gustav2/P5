@@ -4,6 +4,11 @@ venv/
 .ropeproject/
 .vscode/
 __pycache__
-
+.DS_Store
+**/.DS_Store
 energy_plot.png
 topology.png
+success_vs_days.png
+latency_vs_days.png
+energy_vs_days.png
+success_list_vs_days.png
