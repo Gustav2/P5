@@ -18,6 +18,7 @@ class Node:
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.kpi = KPI()
+        self.listen_time = 0
 
         self.neighbors: dict = {}
         self.listen_process = None
@@ -51,6 +52,8 @@ class Node:
                 self.is_sync = False
                 idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
 
+            self.listen_time = listen_time
+
             yield self.env.timeout(idle_time)
             self.harvester.harvest(idle_time, self.local_time())
 
@@ -79,7 +82,7 @@ class Node:
                     ))
 
                     if not self.is_sync:
-                        self.kpi.send_discovery(self.local_time())
+                        self.kpi.send_discovery(listen_for)
                     
                     self.listen_process = self.env.process(self.listen(listen_time - listen_for))
                     try:
@@ -155,6 +158,7 @@ class Node:
                         "delay": offset,
                         "last_meet": self.local_time(),
                     }
+                    self.kpi.receive_disc_ack(self.listen_time)
                     self.kpi.receive_discovery(self.local_time())
                     if self.listen_process:
                         self.listen_process.interrupt('discovered')
