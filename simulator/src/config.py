@@ -31,3 +31,5 @@ CLOCK_DRIFT_MULTIPLIER_RANGE = (
 
 HIGH_LIGHT_RANGE_LUX = (30, 35) # Number of lux for a high powered device
 LOW_LIGHT_RANGE_LUX = (15, 20) # Number of lux for a low powered device
+
+SEED = 42

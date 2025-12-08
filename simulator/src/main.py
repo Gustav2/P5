@@ -140,7 +140,7 @@ def plot_results(results): #New function bcs Andris plotting function won't work
 
 if __name__ == "__main__":
 
-    durations_to_test = list(range(1,61)) #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
+    durations_to_test = [5] #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
     number_of_cycles=3 #Also be careful lol
     res=evaluation(number_of_cycles,durations_to_test)
     plot_results(res)
