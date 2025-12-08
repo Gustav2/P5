@@ -5,12 +5,18 @@ from ..config import *
 class Harvester:
     def __init__(self, id, initial_energy = 0):
         self.energy = initial_energy
-        #self.rng = random.Random(SEED)
-        random.seed(SEED)
+        
+        self.rng = random.Random(SEED)
         if id < LOW_POWERED_NODES:
-            self.lux = random.uniform(*LOW_LIGHT_RANGE_LUX)
+            self.lux = self.rng.uniform(*LOW_LIGHT_RANGE_LUX)
         else:
-            self.lux = random.uniform(*HIGH_LIGHT_RANGE_LUX)
+            self.lux = self.rng.uniform(*HIGH_LIGHT_RANGE_LUX)
+
+        #random.seed(SEED)
+        #if id < LOW_POWERED_NODES:
+        #    self.lux = random.uniform(*LOW_LIGHT_RANGE_LUX)
+        #else:
+        #    self.lux = random.uniform(*HIGH_LIGHT_RANGE_LUX)
             
     def harvest(self, time, local_time):
         self.energy = min(self.energy + self.harvest_rate(local_time) * time, E_MAX)
