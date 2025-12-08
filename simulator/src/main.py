@@ -20,24 +20,28 @@ def main():
             env.run(until=min(t + chunk_size, SIM_TIME))
             pbar.update(chunk_size)
 
-    discovered_neighs = [len(n.neighbors) for n in nodes]
-    avg = mean(discovered_neighs)
-    print("Avg discovered neighbors:", avg)
-    print("Discovery success rate:", avg / (NODES - 1) * 100, "%")
+    kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
+
+    e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
+
+    print(f"Energy usage per DISC cycle: {e_per_cycle} J")
+    print(f"Time till first DISC receive: {avg_time} sec")
+    print(f"Energy per successfull DISC cycle: N/A J")
+    print(f"DISC success rate: {avg_success} %")
 
     sync_tries = [
         n.sync_tries
         for n in nodes
     ]
     avg_syncs = mean(sync_tries)
-    print("Avg sync tries:", avg_syncs)
+    print("Avg SYNCs sent:", avg_syncs)
 
     acks_list = [
         n.acks_received
         for n in nodes
     ]
     avg_acks = mean(acks_list)
-    print("Avg acks received:", avg_acks)
+    print("Avg ACKs received:", avg_acks)
 
     print("Sync success rate:", (avg_acks / avg_syncs * 100) if avg_syncs > 0 else 0, "%")
 

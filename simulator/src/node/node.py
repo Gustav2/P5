@@ -4,6 +4,8 @@ from ..core.network import Network
 from ..core.energy_logger import EnergyLogger
 from .state import State, Package
 from .harvester import Harvester
+from .kpi import KPI
+
 from ..config import *
 
 class Node:
@@ -14,6 +16,8 @@ class Node:
         self.harvester = Harvester(id)
         self.env = env
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
+
+        self.kpi = KPI()
 
         self.neighbors: dict = {}
         self.listen_process = None
@@ -53,6 +57,9 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             if self.harvester.remaining_energy() >= energy_to_use:
+                if not self.is_sync:
+                    self.kpi.start_discovery(self.local_time())
+
                 listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
                 self.listen_process = self.env.process(self.listen(listen_for))
 
@@ -70,6 +77,9 @@ class Node:
                         self.transmit(Package.SYNC if self.is_sync else Package.DISC, 
                         sync_with if self.is_sync else None
                     ))
+
+                    if not self.is_sync:
+                        self.kpi.send_discovery(self.local_time())
                     
                     self.listen_process = self.env.process(self.listen(listen_time - listen_for))
                     try:
@@ -134,7 +144,7 @@ class Node:
         receiver = msg['to']
         offset = math.floor((sender_time + self.local_time()) / 2)
 
-        (sync_with, time_to_meet) = self.soonest_sync(sender)
+        (_, time_to_meet) = self.soonest_sync(sender)
 
         if type == Package.DISC:
             if(self.neighbors.get(sender) == None or time_to_meet < 0):
@@ -145,6 +155,7 @@ class Node:
                         "delay": offset,
                         "last_meet": self.local_time(),
                     }
+                    self.kpi.receive_discovery(self.local_time())
                     if self.listen_process:
                         self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:
