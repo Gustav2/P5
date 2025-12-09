@@ -7,6 +7,5 @@ class State(Enum):
 
 class Package(Enum):
     DISC = 0
-    DISC_ACK = 1
-    SYNC = 2
-    ACK = 3
+    SYNC = 1
+    ACK = 2
