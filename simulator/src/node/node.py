@@ -19,7 +19,6 @@ class Node:
         self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
 
         self.neighbors: dict = {}
-        self.has_sent_disc = False
         self.is_sync = False
         self.syncs_initiated = 0
         self.sync_cycles = []
@@ -95,11 +94,10 @@ class Node:
                                 break
 
                 if not heard:
-                    yield self.env.process(self.transmit(Package.SYNC if self.is_sync else Package.DISC))
+                    yield self.env.process(self.transmit(Package.SYNC if self.is_sync else Package.DISC, None))
                     yield self.env.process(self.listen(listen_time - listen_for))
 
             self.sync_with = []
-            self.has_sent_disc = False
             self.state = State.Idle
 
     def listen(self, duration):
@@ -119,7 +117,7 @@ class Node:
 
         return Network.messages_received(self)
 
-    def transmit(self, package_type: Package):  
+    def transmit(self, package_type: Package, to):  
         if self.capacitor.remaining_energy() < E_TX:
             return False
 
@@ -128,12 +126,10 @@ class Node:
         yield self.env.timeout(PT_TIME)
         self.capacitor.harvest(PT_TIME)
 
-        if package_type == Package.DISC:
-            self.has_sent_disc = True
-
         msg = {
             'type': package_type, 
             'from': self.id,
+            'to': to,
             'time': self.local_time(),
         }
 
@@ -152,39 +148,34 @@ class Node:
 
         type = Package(msg['type'])
         sender = msg['from']
+        to = msg['to']
         sender_time = msg['time']
 
-        meet_in = self.soonest_sync(sender)
-        need_disc = self.neighbors.get(sender) == None or meet_in < 0
+        if type == Package.DISC:
+            if self.neighbors.get(sender) == None or self.soonest_sync(sender) < 0:
+                update_table = to == None or to == self.id
 
-        if type == Package.DISC and need_disc:
-            yield self.env.timeout(random.uniform(*ACK_SEND_DELAY_RANGE))
-            transmit_process = self.env.process(self.transmit(Package.DISC))
-            yield transmit_process
+                if to == self.id:
+                    self.kpi.receive_disc_ack(self.listen_time, self.local_time())
+                
+                if to == None:
+                    yield self.env.process(self.transmit(Package.DISC, sender))
+                    self.kpi.send_disc_ack(self.listen_time, self.local_time())
 
-            if transmit_process.value:
-                self.kpi.send_disc_ack(self.listen_time)
-                self.update_neighbor(sender, sender_time)
-
-        elif type == Package.DISC_ACK and self.has_sent_disc and need_disc:
-
-            self.kpi.receive_disc_ack(self.listen_time, self.local_time())
-            self.update_neighbor(sender, sender_time)
-
+                if update_table:
+                    self.update_neighbor(sender, sender_time)
         elif type == Package.SYNC and self.is_sync and sender in self.neighbors and len(self.sync_cycles):
+                self.sync_cycles[-1]["sync_received"] += 1
 
-            transmit_process = self.env.process(self.transmit(Package.ACK))
-            yield transmit_process
+                yield self.env.timeout(random.uniform(*ACK_SEND_DELAY_RANGE))
+                transmit_process = self.env.process(self.transmit(Package.ACK, sender))
 
-            if transmit_process.value:
+                yield transmit_process
+                if transmit_process.value:
+                    self.update_neighbor(sender, sender_time)
+        elif (type == Package.ACK and to == self.id) or sender in self.sync_with:
+                self.sync_cycles[-1]["acks_received"] += 1
                 self.update_neighbor(sender, sender_time)
-
-            self.sync_cycles[-1]["sync_received"] += 1
-
-        elif type == Package.ACK and self.is_sync and sender in self.sync_with:
-
-            self.update_neighbor(sender, sender_time)
-            self.sync_cycles[-1]["acks_received"] += 1
 
         return True
     
