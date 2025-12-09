@@ -18,9 +18,14 @@ class KPI:
         self.disc_tries += 1
         self.disc_e += listen_time * E_RECEIVE
 
+    def send_disc_ack(self, listen_time):
+        self.disc_success += 1
+        self.disc_e_success = listen_time * E_RECEIVE + E_RX + E_TX
+        self.disc_e += E_RX + E_TX
+
     def receive_disc_ack(self, listen_time, local_time):
         self.disc_success += 1
-        self.disc_e_success = listen_time / 2 * E_RECEIVE + E_RX + E_TX
+        self.disc_e_success = listen_time * E_RECEIVE + E_RX + E_TX
         self.disc_e += E_RX + E_TX
 
         if self.disc_first_time == 0:

@@ -35,10 +35,10 @@ def main():
     total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
     total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
 
-    print(f"Avg SYNCs tries: {mean(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)}")
-    print(f"Avg ACKs received: {mean(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)}")
-    print(f"ACKs per SYNCs rate: {(total_sync + total_ack) / total_initiated * 100:.1f}%")
-    print(f"ACKs per SYNC/ACK rate: {(total_sync + total_ack) / tried_sync_with * 100:.1f} %")
+    print(f"Avg SYNCs tries: {total_sync / NODES}")
+    print(f"Avg ACKs received: {total_ack / NODES}")
+    print(f"ACKs per SYNCs rate: {(total_sync + total_ack) / total_initiated * 100:.2f}%")
+    print(f"ACKs per SYNC/ACK rate: {(total_sync + total_ack) / tried_sync_with * 100:.2f} %")
 
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()
