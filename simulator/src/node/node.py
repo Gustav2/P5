@@ -136,6 +136,8 @@ class Node:
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
+        self.state = State.Idle
+
         return True
 
     def receive(self, msg):
