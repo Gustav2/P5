@@ -39,7 +39,8 @@ class Node:
             energy_to_use = listen_time * E_RECEIVE + E_TX + E_RX
 
             # Sync part
-            energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
+            next_sync_with = self.get_upcoming_sync_nodes()
+            energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + len(next_sync_with) * E_RX
             idle_time_for_sync = self.capacitor.time_to_charge_to(energy_for_sync)
             sync_in = self.soonest_sync()
 
@@ -73,7 +74,7 @@ class Node:
                 heard = len(messages) > 0 # type: ignore
 
                 if self.is_sync:
-                    self.update_upcoming_sync_nodes()
+                    self.sync_with = next_sync_with
                     if len(self.sync_with) == 0:
                         self.is_sync = False
                     else:
@@ -159,14 +160,17 @@ class Node:
                 if to != None and to != self.id:
                     return False
                 
+                if to == self.id:
+                    self.kpi.receive_disc_ack(self.listen_time, self.local_time())
+                
                 update_table = True
                 if to == None:
                     transmit_process = self.env.process(self.transmit(Package.DISC, sender))
+                    self.kpi.send_disc_ack(self.listen_time)
                     yield transmit_process
                     update_table = transmit_process.value
                     
                 if update_table:
-                    self.kpi.receive_disc_ack(self.listen_time, self.local_time())
                     self.update_neighbor(sender, sender_time)
         elif type == Package.SYNC and sender in self.neighbors:
             if self.is_sync and len(self.sync_cycles):
@@ -243,12 +247,12 @@ class Node:
         
         return drift_rate
 
-    def update_upcoming_sync_nodes(self):
-        self.sync_with = []
+    def get_upcoming_sync_nodes(self):
+        result: list[int] = []
         
         soonest = self.soonest_sync()
         if soonest == float('inf'):
-            return
+            return []
         
         current_time = self.local_time()
         
@@ -259,7 +263,9 @@ class Node:
             meet_in = my_sync_time - current_time
             
             if soonest - SYNC_TIME/2 <= meet_in <= soonest + SYNC_TIME/2:
-                self.sync_with.append(node_id)
+                result.append(node_id)
+
+        return result
 
     def local_time(self):
         return math.floor(self.env.now * self.clock_drift)
