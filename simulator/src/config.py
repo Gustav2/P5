@@ -4,7 +4,7 @@ HIGH_POWERED_NODES = 36 # High powered nodes
 NODES = LOW_POWERED_NODES + HIGH_POWERED_NODES # Amount of nodes in the simulation
 
 ONE_DAY = 86_400_000 # Miliseconds in one day
-SIM_TIME = 7 * ONE_DAY # Simulation time in miliseconds
+SIM_TIME = 30 * ONE_DAY # Simulation time in miliseconds
 
 PT_TIME = 14.89 # Time in miliseconds used for decoding an incoming packet
 PT_LOSS = 0.05 # Chance of loosing a packets
@@ -18,12 +18,13 @@ E_RECEIVE = 0.03564 / 1_000 # Energy used per millisecond in receiveing mode
 E_TX = 0.1023 / 1_000 * PT_TIME # Energy used to transmit the packet
 E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
 
-LISTEN_TIME_RANGE = (2_000, 3_000) # Range for time listening in milliseconds
+LISTEN_TIME_RANGE = (1_000, 2_000) # Range for time listening in milliseconds
 
 SYNC_INTERVAL = 1 * ONE_DAY # How ofter nodes perform sync
 SYNC_TIME = 30_000 # For how long sync is operated
 SYNC_TIME_RANGE = (2, SYNC_TIME / 2) # For how long node listens for a sync message, before sending one
 SYNC_PREPARATION_TIME = 45 * 60 * 1_000 # For how long before a sync node starts chraging
+ACK_SEND_DELAY_RANGE = (100, 1_000) # Amount of milliseconds node waits for before sending an ACK to SYNC to prevent collisions
 
 CLOCK_DRIFT_PER_DAY = 800 # Max clock drift per day
 CLOCK_DRIFT_MULTIPLIER_RANGE = (
