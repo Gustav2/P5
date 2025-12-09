@@ -95,15 +95,16 @@ class Node:
             self.state = State.Idle
 
     def listen(self, duration):
-        energy_to_use = E_RECEIVE * duration
+        available_seconds = math.floor(self.harvester.remaining_energy() / E_RECEIVE)
+        energy_to_use = E_RECEIVE * min(duration, available_seconds)
 
-        if self.state != State.Idle or self.harvester.remaining_energy() < energy_to_use:
+        if self.harvester.remaining_energy() < energy_to_use:
             return False
 
         self.state = State.Receive
         self.harvester.discharge(energy_to_use)        
-        yield self.env.timeout(duration)
-        self.harvester.harvest(duration, self.local_time())
+        yield self.env.timeout(available_seconds)
+        self.harvester.harvest(available_seconds, self.local_time())
         
         self.state = State.Idle
 
@@ -151,17 +152,18 @@ class Node:
 
         if type == Package.DISC:
             self.kpi.receive_discovery(self.listen_time, self.local_time())
-            if(self.neighbors.get(sender) == None or time_to_meet < 0):
+            if(self.id == receiver or self.neighbors.get(sender) == None or time_to_meet < 0):
                 self.kpi.receive_disc_ack(self.listen_time)
-                transmit_process = self.env.process(self.transmit(Package.DISC, None))
-                yield transmit_process
-                if transmit_process.value:
-                    self.neighbors[sender] = {
-                        "delay": offset,
-                        "last_meet": self.local_time(),
-                    }
-                    if self.listen_process:
-                        self.listen_process.interrupt('discovered')
+                self.neighbors[sender] = {
+                    "delay": offset,
+                    "last_meet": self.local_time(),
+                }
+
+                if receiver == None:
+                    yield self.env.process(self.transmit(Package.DISC, sender))
+
+                if self.listen_process:
+                    self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:
             if self.id == receiver:
                 transmit_process = self.env.process(self.transmit(Package.ACK, sender))
