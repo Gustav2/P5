@@ -44,7 +44,7 @@ def main():
     avg_acks = mean(acks_list)
     print("Avg ACKs received:", avg_acks)
 
-    print("Sync success rate:", (avg_acks / avg_syncs * 100) if avg_syncs > 0 else 0, "%")
+    print("Sync success rate:", (sum(acks_list) / sum(sync_tries) * 100) if avg_syncs > 0 else 0, "%")
 
     EnergyLogger.plot()
     NetworkTopology(Network.nodes).save()
