@@ -7,3 +7,11 @@ __pycache__
 
 energy_plots
 topology.png
+acks_vs_days.png
+energy_plot.png
+energy_vs_days.png
+latency_vs_days.png
+success_list_vs_days.png
+success_vs_days.png
+sync_success_vs_days.png
+sync_tries_vs_days.png
