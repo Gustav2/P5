@@ -10,8 +10,8 @@ def plot(Network):
 
 if __name__ == "__main__":
 
-    durations_to_test = list(range(3, 10)) #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
-    number_of_cycles = 4 #Also be careful lol
+    durations_to_test = list(range(1, 81)) #Careful with the days, the simulation will take a very very long time, and eat your computer's resources ASAP
+    number_of_cycles = 3 #Also be careful lol
 
     plotter = Plotter()
     results = plotter.evaluation(runs=number_of_cycles, duration_days=durations_to_test)

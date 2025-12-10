@@ -7,7 +7,7 @@ from scipy import stats
 from ..node.node import Node
 from .network import Network
 
-from ..config import NODES, RANGE,ONE_DAY
+from ..config import NODES, RANGE,ONE_DAY,SEED
 
 class Plotter:
     def __init__(self):
@@ -17,6 +17,11 @@ class Plotter:
         checkpoints = [days * ONE_DAY for days in duration_days]
 
         for i in range(runs):
+            current_seed=SEED+i
+            random.seed(current_seed)
+            Network.nodes = []
+            Network.mailboxes = {}
+            print(f"[INFO] Run {i+1} using SEED={current_seed}")
             checkpoint_data = self.simulate_with_checkpoints(checkpoints)
             
             for days, checkpoint_time in zip(duration_days, checkpoints):
@@ -70,7 +75,14 @@ class Plotter:
         t_vals = [results[d][1] for d in days]
         s_vals = [results[d][2] for d in days]
         s_list = [results[d][3] for d in days]
-
+        overall_mean_success = mean(s_vals)
+        overall_latency= mean(t_vals)
+        overall_energy= mean(e_vals)
+        print("\n==============================")
+        print(f"Overall Discovery Success Rate: {overall_mean_success:.2f}%")
+        print(f"Overall Latency {overall_latency:.2f}")
+        print(f"Overall Energy: {overall_energy:.2f}")
+        print("==============================\n")
         # Energy Graph
         plt.figure()
         plt.plot(days, e_vals, marker='o',color='orange')
@@ -108,7 +120,7 @@ class Plotter:
 
         # Mean per day (across runs)
         means = s_array.mean(axis=1)
-
+        print("Mean:",means)
         # Sample standard deviation per day (ddof=1 → unbiased estimate)
         stds = s_array.std(axis=1, ddof=1)
 

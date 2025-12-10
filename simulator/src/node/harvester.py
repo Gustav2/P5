@@ -6,7 +6,7 @@ class Harvester:
     def __init__(self, id, initial_energy = 0):
         self.energy = initial_energy
         
-        self.rng = random.Random(SEED)
+        self.rng = random
         if id < LOW_POWERED_NODES:
             self.lux = self.rng.uniform(*LOW_LIGHT_RANGE_LUX)
         else:
