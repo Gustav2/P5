@@ -143,6 +143,8 @@ class Node:
     def receive(self, msg):
         if self.state != State.Receive or self.capacitor.remaining_energy() < E_RX:
             return False
+        
+        self.state = State.Decode
             
         self.capacitor.discharge(E_RX)
         yield self.env.timeout(PT_TIME)
@@ -152,6 +154,8 @@ class Node:
         sender = msg['from']
         to = msg['to']
         sender_time = msg['time']
+
+        self.state = State.Receive
 
         if type == Package.DISC:
             if self.neighbors.get(sender) == None or self.soonest_sync(sender) < 0:
