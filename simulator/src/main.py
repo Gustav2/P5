@@ -1,14 +1,14 @@
 import simpy, random
+
 from statistics import mean
 
 from .node.node import Node
 from .core.network import Network
-
 from .core.energy_logger import EnergyLogger
 from .core.network_topology import NetworkTopology
 from .core.plotter import Plotter
 
-from .config import NODES, RANGE, ONE_DAY, SEED
+from .config import NODES, RANGE, ONE_DAY
 
 def plot(Network):
     EnergyLogger.plot()
@@ -34,12 +34,12 @@ def simulate_with_checkpoints(checkpoints):
     
     return checkpoint_results
 
-def simulate(runs, duration):
-    checkpoints = [int(days * ONE_DAY) for days in duration]
+def simulate(number_of_runs, duration_days, seed):
+    checkpoints = [int(days * ONE_DAY) for days in duration_days]
     checkpoint_results_list = []
 
-    for run in range(runs):
-        current_seed = SEED+run
+    for run in range(number_of_runs):
+        current_seed = seed + run
         random.seed(current_seed)
         Network.nodes = []
         Network.mailboxes = {}
@@ -57,6 +57,9 @@ if __name__ == "__main__":
     
     number_of_runs = 3
     duration_days = list(range(1, 31))
-    SEED = 42
+    seed = 42
 
-    simulate(number_of_runs, duration_days)
+    simulate(number_of_runs, duration_days, seed)
+
+    EnergyLogger.plot(chunks_days=2)
+    NetworkTopology(Network.nodes).save()
