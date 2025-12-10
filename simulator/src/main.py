@@ -4,6 +4,8 @@ from statistics import mean
 
 from .node.node import Node
 from .core.network import Network
+from .core.energy_logger import EnergyLogger
+from .core.network_topology import NetworkTopology
 from .core.plotter import Plotter
 
 from .config import NODES, RANGE, ONE_DAY
@@ -25,7 +27,9 @@ def simulate_with_checkpoints(checkpoints):
         kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
         e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
         success_disc_e = mean([n.kpi.get_success_disc_e() for n in nodes])
+        
         sync_tries = [n.sync_tries for n in nodes]
+
         avg_syncs = mean(sync_tries)
         acks_list = [n.acks_received for n in nodes]
         avg_acks = mean(acks_list)
@@ -35,12 +39,12 @@ def simulate_with_checkpoints(checkpoints):
     
     return checkpoint_results
 
-def simulate(runs, duration):
-    checkpoints = [int(days * ONE_DAY) for days in duration]
+def simulate(number_of_runs, duration_days, seed):
+    checkpoints = [int(days * ONE_DAY) for days in duration_days]
     checkpoint_results_list = []
 
-    for run in range(runs):
-        current_seed = SEED+run
+    for run in range(number_of_runs):
+        current_seed = seed + run
         random.seed(current_seed)
         Network.nodes = []
         Network.mailboxes = {}
@@ -58,21 +62,9 @@ if __name__ == "__main__":
     
     number_of_runs = 3
     duration_days = list(range(1, 91))
-    SEED = 42
+    seed = 42
 
-    simulate(number_of_runs, duration_days)
-
-"""
-def main():
-    durations_to_test = list(range(1, 90))
-    number_of_cycles = 2
-
-    plotter = Plotter()
-    results = plotter.evaluation(runs=number_of_cycles, duration_days=durations_to_test)
-    plotter.plot_results(results)
+    simulate(number_of_runs, duration_days, seed)
 
     EnergyLogger.plot()
     NetworkTopology(Network.nodes).save()
-
-if __name__ == "__main__":
-    main()"""
