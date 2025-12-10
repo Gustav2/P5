@@ -13,20 +13,25 @@ class Plotter:
     def __init__(self):
         self.results = {}
 
-    def evaluation(self, runs, duration_days):
-        checkpoints = [days * ONE_DAY for days in duration_days]
-
-        for i in range(runs):
-            checkpoint_data = self.simulate_with_checkpoints(checkpoints)
-            
-            for days, checkpoint_time in zip(duration_days, checkpoints):
+    def evaluation(self, checkpoint_results_list):
+        """
+        Process pre-computed simulation results and aggregate them.
+        
+        Args:
+            checkpoint_results_list: List of dicts from simulate_with_checkpoints()
+                                    Each dict maps checkpoint_time -> (e_per_cycle, avg_time, avg_success, ...)
+        """
+        for run_index, checkpoint_data in enumerate(checkpoint_results_list):
+            for checkpoint_time, (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e) in checkpoint_data.items():
+                # Convert checkpoint_time back to days for organization
+                days = checkpoint_time / ONE_DAY
+                
                 if days not in self.results:
                     self.results[days] = {
                         'e': [], 't': [], 's': [], 's_list': [],
-                        'sync_tries': [], 'acks_received': [], 'sync_success': []
+                        'sync_tries': [], 'acks_received': [], 'sync_success': [], 'success_disc_e': []
                     }
                 
-                e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate = checkpoint_data[checkpoint_time]
                 self.results[days]['e'].append(e_per_cycle)
                 self.results[days]['t'].append(avg_time)
                 self.results[days]['s'].append(avg_success)
@@ -34,10 +39,12 @@ class Plotter:
                 self.results[days]['sync_tries'].append(avg_syncs)
                 self.results[days]['acks_received'].append(avg_acks)
                 self.results[days]['sync_success'].append(sync_success_rate)
+                self.results[days]['success_disc_e'].append(success_disc_e)
                 
                 print("----------------------------")
-                print(f"Simulation duration: {days} days (Run {i+1})")
+                print(f"Simulation duration: {days} days (Run {run_index+1})")
                 print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
+                print(f"Energy Consumption per Successful Discovery Cycle: {success_disc_e} J")
                 print(f"Discovery Latency: {avg_time} s")
                 print(f"Discovery Success Rate: {avg_success} %")
                 print(f"Avg SYNCs sent: {avg_syncs}")
@@ -53,7 +60,8 @@ class Plotter:
                 self.results[days]['s_list'],
                 mean(self.results[days]['sync_tries']),
                 mean(self.results[days]['acks_received']),
-                mean(self.results[days]['sync_success'])
+                mean(self.results[days]['sync_success']),
+                mean(self.results[days]['success_disc_e'])
             )
         
         return self.results
@@ -164,7 +172,7 @@ class Plotter:
         plt.grid(True)
         plt.savefig("success_list_vs_days.png")
 
-                # SYNC Tries Graph
+        # SYNC Tries Graph
         plt.figure()
         plt.plot(days, sync_tries_vals, marker='o', color='green')
         plt.title("Average SYNCs Sent vs Duration")
