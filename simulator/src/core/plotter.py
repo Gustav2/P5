@@ -23,10 +23,10 @@ class Plotter:
                 if days not in self.results:
                     self.results[days] = {
                         'e': [], 't': [], 's': [], 's_list': [],
-                        'sync_tries': [], 'acks_received': [], 'sync_success': []
+                        'sync_tries': [], 'acks_received': [], 'sync_success': [], 'success_disc_e': []
                     }
                 
-                e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate = checkpoint_data[checkpoint_time]
+                e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e = checkpoint_data[checkpoint_time]
                 self.results[days]['e'].append(e_per_cycle)
                 self.results[days]['t'].append(avg_time)
                 self.results[days]['s'].append(avg_success)
@@ -34,10 +34,12 @@ class Plotter:
                 self.results[days]['sync_tries'].append(avg_syncs)
                 self.results[days]['acks_received'].append(avg_acks)
                 self.results[days]['sync_success'].append(sync_success_rate)
+                self.results[days]['success_disc_e'].append(success_disc_e)
                 
                 print("----------------------------")
                 print(f"Simulation duration: {days} days (Run {i+1})")
                 print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
+                print(f"Energy Consumption per Successful Discovery Cycle: {success_disc_e} J")
                 print(f"Discovery Latency: {avg_time} s")
                 print(f"Discovery Success Rate: {avg_success} %")
                 print(f"Avg SYNCs sent: {avg_syncs}")
@@ -53,7 +55,8 @@ class Plotter:
                 self.results[days]['s_list'],
                 mean(self.results[days]['sync_tries']),
                 mean(self.results[days]['acks_received']),
-                mean(self.results[days]['sync_success'])
+                mean(self.results[days]['sync_success']),
+                mean(self.results[days]['success_disc_e'])
             )
         
         return self.results
@@ -74,6 +77,7 @@ class Plotter:
             
             kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
             e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
+            success_disc_e = mean([n.kpi.get_success_disc_e() for n in nodes])
             
             sync_tries = [n.sync_tries for n in nodes]
             avg_syncs = mean(sync_tries)
@@ -83,7 +87,7 @@ class Plotter:
             
             sync_success_rate = (avg_acks / avg_syncs * 100) if avg_syncs > 0 else 0
             
-            checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate)
+            checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e)
         
         return checkpoint_results
     
@@ -96,6 +100,7 @@ class Plotter:
         sync_tries_vals = [results[d][4] for d in days]
         acks_vals = [results[d][5] for d in days]
         sync_success_vals = [results[d][6] for d in days]
+        success_disc_e = [results[d][7] for d in days]
 
         # Energy Graph
         plt.figure()
@@ -105,6 +110,15 @@ class Plotter:
         plt.ylabel("Energy (J)")
         plt.grid(True)
         plt.savefig("energy_vs_days.png")
+
+        # Energy for successfull discovery Graph
+        plt.figure()
+        plt.plot(days, success_disc_e, marker='o',color='orange')
+        plt.title("Energy Consumption per Successful Discovery Cycle vs Duration")
+        plt.xlabel("Simulation Duration (days)")
+        plt.ylabel("Energy (J)")
+        plt.grid(True)
+        plt.savefig("energy_success_vs_days.png")
 
         # Latency Graph
         plt.figure()
@@ -164,7 +178,7 @@ class Plotter:
         plt.grid(True)
         plt.savefig("success_list_vs_days.png")
 
-                # SYNC Tries Graph
+        # SYNC Tries Graph
         plt.figure()
         plt.plot(days, sync_tries_vals, marker='o', color='green')
         plt.title("Average SYNCs Sent vs Duration")
