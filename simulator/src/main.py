@@ -8,7 +8,7 @@ from .core.energy_logger import EnergyLogger
 from .core.network_topology import NetworkTopology
 from .core.plotter import Plotter
 
-from .config import NODES, SIM_TIME, RANGE, ONE_DAY, SEED
+from .config import NODES, RANGE, ONE_DAY, SEED
 
 def plot(Network):
     EnergyLogger.plot()

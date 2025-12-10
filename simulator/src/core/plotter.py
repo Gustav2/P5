@@ -1,13 +1,10 @@
 import matplotlib.pyplot as plt
-import simpy, random
-from statistics import mean
 import numpy as np
+
+from statistics import mean
 from scipy import stats
 
-from ..node.node import Node
-from .network import Network
-
-from ..config import NODES, RANGE, ONE_DAY, SEED
+from ..config import ONE_DAY
 
 class Plotter:
     def __init__(self):
@@ -36,25 +33,6 @@ class Plotter:
                 print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
                 print(f"Discovery Latency: {avg_time} s")
                 print(f"Discovery Success Rate: {avg_success} %")
-
-        ###############################
-        """for i in range(runs):
-            current_seed=SEED+i
-            random.seed(current_seed)
-            Network.nodes = []
-            Network.mailboxes = {}
-            print(f"[INFO] Run {i+1} using SEED={current_seed}")
-            checkpoint_data = self.simulate_with_checkpoints(checkpoints)
-            
-            for days, checkpoint_time in zip(duration_days, checkpoints):
-                if days not in self.results:
-                    self.results[days] = {'e': [], 't': [], 's': [], 's_list': []}
-                
-                e_per_cycle, avg_time, avg_success = checkpoint_data[checkpoint_time]
-                self.results[days]['e'].append(e_per_cycle)
-                self.results[days]['t'].append(avg_time)
-                self.results[days]['s'].append(avg_success)
-                self.results[days]['s_list'].append(avg_success)"""
         
         # Convert to averages
         for days in self.results:
