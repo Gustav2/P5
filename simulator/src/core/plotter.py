@@ -7,16 +7,38 @@ from scipy import stats
 from ..node.node import Node
 from .network import Network
 
-from ..config import NODES, RANGE,ONE_DAY,SEED
+from ..config import NODES, RANGE, ONE_DAY, SEED
 
 class Plotter:
     def __init__(self):
         self.results = {}
 
-    def evaluation(self, runs, duration_days):
-        checkpoints = [days * ONE_DAY for days in duration_days]
+    def evaluation(self, checkpoint_results_list):
+        for run_index, checkpoint_data in enumerate(checkpoint_results_list):
+            for checkpoint_time, (e_per_cycle, avg_time, avg_success) in checkpoint_data.items():
+                days = checkpoint_time / ONE_DAY
 
-        for i in range(runs):
+                if days not in self.results:
+                    self.results[days] = {
+                        'e': [], 
+                        't': [], 
+                        's': [], 
+                        's_list': []
+                    }
+
+                self.results[days]['e'].append(e_per_cycle)
+                self.results[days]['t'].append(avg_time)
+                self.results[days]['s'].append(avg_success)
+                self.results[days]['s_list'].append(avg_success)
+
+                print("----------------------------")
+                print(f"Simulation duration: {days} days (Run {run_index+1})")
+                print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
+                print(f"Discovery Latency: {avg_time} s")
+                print(f"Discovery Success Rate: {avg_success} %")
+
+        ###############################
+        """for i in range(runs):
             current_seed=SEED+i
             random.seed(current_seed)
             Network.nodes = []
@@ -32,13 +54,7 @@ class Plotter:
                 self.results[days]['e'].append(e_per_cycle)
                 self.results[days]['t'].append(avg_time)
                 self.results[days]['s'].append(avg_success)
-                self.results[days]['s_list'].append(avg_success)
-                
-                print("----------------------------")
-                print(f"Simulation duration: {days} days (Run {i+1})")
-                print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
-                print(f"Discovery Latency: {avg_time} s")
-                print(f"Discovery Success Rate: {avg_success} %")
+                self.results[days]['s_list'].append(avg_success)"""
         
         # Convert to averages
         for days in self.results:
@@ -50,24 +66,6 @@ class Plotter:
             )
         
         return self.results
-
-    def simulate_with_checkpoints(self, checkpoints):
-        """Run simulation once and collect metrics at specified time intervals."""
-        env = simpy.Environment()
-        nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
-        
-        for n in nodes:
-            Network.register_node(n)
-
-        checkpoint_results = {}
-        
-        for checkpoint_time in sorted(checkpoints):
-            env.run(until = checkpoint_time)
-            kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
-            e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
-            checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success)
-        
-        return checkpoint_results
 
     def plot_results(self, results): #New function bcs Andris plotting function won't work, and better to have a spearate one.
         days = list(results.keys())
@@ -83,6 +81,7 @@ class Plotter:
         print(f"Overall Latency {overall_latency:.2f}")
         print(f"Overall Energy: {overall_energy:.2f}")
         print("==============================\n")
+        
         # Energy Graph
         plt.figure()
         plt.plot(days, e_vals, marker='o',color='orange')
