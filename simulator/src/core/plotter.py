@@ -1,13 +1,10 @@
 import matplotlib.pyplot as plt
-import simpy, random
-from statistics import mean
 import numpy as np
+
+from statistics import mean
 from scipy import stats
 
-from ..node.node import Node
-from .network import Network
-
-from ..config import NODES, RANGE,ONE_DAY
+from ..config import ONE_DAY
 
 class Plotter:
     def __init__(self):

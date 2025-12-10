@@ -1,13 +1,12 @@
 import simpy, random
+
 from statistics import mean
 
 from .node.node import Node
 from .core.network import Network
-from .core.energy_logger import EnergyLogger
-from .core.network_topology import NetworkTopology
 from .core.plotter import Plotter
 
-from .config import NODES, SIM_TIME, RANGE, ONE_DAY
+from .config import NODES, RANGE, ONE_DAY
 
 def simulate_with_checkpoints(checkpoints):
     """Run simulation once and collect metrics at specified time intervals."""
