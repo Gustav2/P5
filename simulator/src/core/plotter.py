@@ -13,13 +13,12 @@ class Plotter:
     def __init__(self):
         self.results = {}
 
-    def evaluation(self, runs, duration_days):
-        checkpoints = [days * ONE_DAY for days in duration_days]
+    def evaluation(self, checkpoint_results_list):
 
-        for i in range(runs):
-            checkpoint_data = self.simulate_with_checkpoints(checkpoints)
-            
-            for days, checkpoint_time in zip(duration_days, checkpoints):
+        for run_index, checkpoint_data in enumerate(checkpoint_results_list):
+            for checkpoint_time, (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e) in checkpoint_data.items():
+                days = checkpoint_time / ONE_DAY
+
                 if days not in self.results:
                     self.results[days] = {
                         'e': [], 't': [], 's': [], 's_list': [],
@@ -37,7 +36,7 @@ class Plotter:
                 self.results[days]['success_disc_e'].append(success_disc_e)
                 
                 print("----------------------------")
-                print(f"Simulation duration: {days} days (Run {i+1})")
+                print(f"Simulation duration: {days} days (Run {run_index+1})")
                 print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
                 print(f"Energy Consumption per Successful Discovery Cycle: {success_disc_e} J")
                 print(f"Discovery Latency: {avg_time} s")
@@ -61,8 +60,8 @@ class Plotter:
         
         return self.results
 
-    def simulate_with_checkpoints(self, checkpoints):
-        """Run simulation once and collect metrics at specified time intervals."""
+    """def simulate_with_checkpoints(self, checkpoints):
+        """"""Run simulation once and collect metrics at specified time intervals.""""""
         env = simpy.Environment()
         nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
         
@@ -77,6 +76,7 @@ class Plotter:
             
             kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
             e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
+
             success_disc_e = mean([n.kpi.get_success_disc_e() for n in nodes])
             
             sync_tries = [n.sync_tries for n in nodes]
@@ -89,7 +89,7 @@ class Plotter:
             
             checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e)
         
-        return checkpoint_results
+        return checkpoint_results"""
     
     def plot_results(self, results): #New function bcs Andris plotting function won't work, and better to have a spearate one.
         days = list(results.keys())
