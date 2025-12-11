@@ -79,6 +79,15 @@ class Plotter:
         acks_vals = [results[d][5] for d in days]
         sync_success_vals = [results[d][6] for d in days]
 
+        overall_mean_success = mean(s_vals)
+        overall_latency= mean(t_vals)
+        overall_energy= mean(e_vals)
+        print("\n==============================")
+        print(f"Overall Discovery Success Rate: {overall_mean_success:.2f}%")
+        print(f"Overall Latency {overall_latency:.2f}")
+        print(f"Overall Energy: {overall_energy:.2f}")
+        print("==============================\n")
+
         # Energy Graph
         plt.figure()
         plt.plot(days, e_vals, marker='o',color='orange')
@@ -116,6 +125,7 @@ class Plotter:
 
         # Mean per day (across runs)
         means = s_array.mean(axis=1)
+        print("Mean:",means)
 
         # Sample standard deviation per day (ddof=1 → unbiased estimate)
         stds = s_array.std(axis=1, ddof=1)
