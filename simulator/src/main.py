@@ -100,7 +100,8 @@ def simulate(number_of_runs, duration_days, seed):
     overall_avg_energy_per_day = mean(avg_energy_days)
     version_0_energyValue=13.06808
     print("\n===== OVERALL AVERAGE ENERGY PER DAY (ALL RUNS) =====")
-    print(f"Average energy used per node per day across ALL runs:",(1-(overall_avg_energy_per_day/version_0_energyValue)), "J")
+    print(f"Average energy used per node per day across ALL runs:",overall_avg_energy_per_day, "J")
+    print(f"ESR:",(1-(overall_avg_energy_per_day/version_0_energyValue)), "J")
     print("=====================================================\n")
 
     plotter = Plotter()
