@@ -2,6 +2,7 @@ from ..config import *
 
 class KPI:
     def __init__(self):
+        self.e_total = 0
         self.disc_start_time = 0
         self.disc_first_time = 0
     
@@ -16,6 +17,9 @@ class KPI:
         self.sync_sent = 0
         self.acks_received = 0
 
+    def add_e(self, energy):
+        self.e_total += energy
+
     def start_discovery(self, local_time):
         if self.disc_start_time == 0:
             self.disc_start_time = local_time
@@ -23,7 +27,7 @@ class KPI:
     def send_discovery(self, listen_time):
         self.disc_sent += 1
 
-        listen_e = listen_time / 2 * E_RECEIVE
+        listen_e = listen_time * E_RECEIVE
         self.disc_e_send += listen_e + E_TX
         self.disc_e_receive += listen_e
 

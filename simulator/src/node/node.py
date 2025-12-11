@@ -19,6 +19,7 @@ class Node:
 
         self.kpi = KPI()
         self.listen_time = 0
+        self.listen_for = 0
 
         self.neighbors: dict = {}
         self.listen_process = None
@@ -106,6 +107,7 @@ class Node:
         yield self.env.timeout(available_seconds)
         self.harvester.harvest(available_seconds, self.local_time())
         
+        self.kpi.add_e(energy_to_use)
         self.state = State.Idle
 
         return Network.messages_received(self)
@@ -129,6 +131,8 @@ class Node:
             'time': self.local_time(),
         }
 
+        self.kpi.add_e(E_TX)
+
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
@@ -150,8 +154,10 @@ class Node:
 
         (_, time_to_meet) = self.soonest_sync(sender)
 
+        self.kpi.add_e(E_RX)
+
         if type == Package.DISC:
-            self.kpi.receive_discovery(self.listen_time, self.local_time())
+            self.kpi.receive_discovery(self.listen_for, self.local_time())
             if(self.id == receiver or self.neighbors.get(sender) == None or time_to_meet < 0):
                 self.kpi.receive_disc_ack(self.listen_time)
                 self.neighbors[sender] = {
