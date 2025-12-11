@@ -10,7 +10,7 @@ SUNSET_TIME = 18 * 60 * 60 * 1_000 # Time of sunset in miliseconds
 IS_DAY_CYCLE = False # Is simulation using day cycle or charges infinitely
 
 PT_TIME = 12.1 # Time in miliseconds used for decoding an incoming packet
-PT_LOSS = 0.1 # Chance of loosing a packet
+PT_LOSS = 0.005 # Chance of loosing a packet
 DELAY_RANGE = (10, 50) # Packet delay range in miliseconds
 
 # All the energy is Joules or Joules/miliseconds
@@ -23,7 +23,7 @@ E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
 
 LISTEN_TIME_RANGE = (1_000, 2_000) # Range for time listening in milliseconds
 
-CLOCK_DRIFT_PER_DAY = 800 # Max clock drift per day
+CLOCK_DRIFT_PER_DAY = 1_730 # Max clock drift per day
 CLOCK_DRIFT_MULTIPLIER_RANGE = (
     (ONE_DAY - CLOCK_DRIFT_PER_DAY) / ONE_DAY,
     (ONE_DAY + CLOCK_DRIFT_PER_DAY) / ONE_DAY
