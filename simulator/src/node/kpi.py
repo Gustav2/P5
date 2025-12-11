@@ -2,6 +2,7 @@ from ..config import *
 
 class KPI:
     def __init__(self):
+        self.e_total = 0
         self.disc_start_time = 0
         self.disc_first_time = 0
 
@@ -10,6 +11,9 @@ class KPI:
 
         self.disc_e_success = 0
         self.disc_success = 0
+
+    def add_e(self, energy):
+        self.e_total += energy
 
     def start_discovery(self, listen_time, local_time):
         if self.disc_start_time == 0:

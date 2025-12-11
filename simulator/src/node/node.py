@@ -113,6 +113,7 @@ class Node:
         yield self.env.timeout(duration)
         self.capacitor.harvest(duration)
         
+        self.kpi.add_e(energy_to_use)
         self.state = State.Idle
 
         return Network.messages_received(self)
@@ -136,6 +137,7 @@ class Node:
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
+        self.kpi.add_e(E_TX)
         self.state = State.Idle
 
         return True
@@ -156,6 +158,7 @@ class Node:
         sender_time = msg['time']
 
         self.state = State.Receive
+        self.kpi.add_e(E_RX)
 
         if type == Package.DISC:
             if self.neighbors.get(sender) == None or self.soonest_sync(sender) < 0:
@@ -179,7 +182,7 @@ class Node:
                 yield transmit_process
                 if transmit_process.value:
                     self.update_neighbor(sender, sender_time)
-        elif (type == Package.ACK and to == self.id) or sender in self.sync_with:
+        elif type == Package.ACK and (to == self.id or sender in self.sync_with):
                 self.sync_cycles[-1]["acks_received"] += 1
                 self.update_neighbor(sender, sender_time)
 
@@ -192,7 +195,7 @@ class Node:
         for id, neigh in self.neighbors.items():
             drift_rate = self.estimate_drift(id)
             
-            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            my_sync_time = neigh["last_meet_mine"] / drift_rate + SYNC_INTERVAL + SYNC_TIME / 2
             current_meet_in = my_sync_time - current_time
 
             if node_id == id:
@@ -256,7 +259,7 @@ class Node:
         for node_id, neigh in self.neighbors.items():
             drift_rate = neigh.get("drift_rate", 1.0)
             
-            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            my_sync_time = neigh["last_meet_mine"] / drift_rate + SYNC_INTERVAL + SYNC_TIME / 2
             meet_in = my_sync_time - current_time
             
             if soonest - SYNC_TIME/2 <= meet_in <= soonest + SYNC_TIME/2:

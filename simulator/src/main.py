@@ -32,10 +32,15 @@ def simulate_with_checkpoints(checkpoints, run):
         tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
         total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
         total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
-        
+
+        total_packages_sent = 0
+        for node in nodes:
+            for cycle in node.sync_cycles:
+                total_packages_sent += min(cycle["sync_received"] + cycle["acks_received"], cycle["nodes"])
+
         avg_acks = total_ack / NODES
         avg_syncs = total_sync / NODES
-        sync_success_rate = (total_sync + total_ack) / tried_sync_with * 100 if tried_sync_with > 0 else 0
+        sync_success_rate = (total_packages_sent / tried_sync_with * 100) if tried_sync_with > 0 else 0
 
         checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e)
     
@@ -66,7 +71,7 @@ def simulate(number_of_runs, duration_days, seed):
 if __name__ == "__main__":
     
     number_of_runs = 3
-    duration_days = list(range(1, 11))
+    duration_days = list(range(1, 31))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
