@@ -54,7 +54,7 @@ def simulate(number_of_runs, duration_days, seed):
 if __name__ == "__main__":
     
     number_of_runs = 3
-    duration_days = list(range(1, 31))
+    duration_days = list(range(1, 81))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
