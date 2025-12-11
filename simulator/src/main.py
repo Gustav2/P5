@@ -64,7 +64,7 @@ def simulate(number_of_runs, duration_days, seed):
 if __name__ == "__main__":
     print("Protocol Version 1.1")
     number_of_runs = 3
-    duration_days = list(range(1, 11))
+    duration_days = list(range(1, 81))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)

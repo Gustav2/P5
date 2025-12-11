@@ -81,12 +81,23 @@ class Plotter:
         success_disc_e = [results[d][7] for d in days]
         
         overall_mean_success = mean(s_vals)
-        overall_latency= mean(t_vals)
-        overall_energy= mean(e_vals)
+        overall_latency = mean(t_vals)
+        overall_energy = mean(e_vals)
+        overall_acks_vals = mean(acks_vals)
+        overall_sync_tries_vals = mean(sync_tries_vals)
+        overall_sync_success_vals = mean(sync_success_vals)
+        overall_success_disc_e = mean(success_disc_e)
+
         print("\n==============================")
-        print(f"Overall Discovery Success Rate: {overall_mean_success:.2f}%")
-        print(f"Overall Latency {overall_latency:.2f}")
-        print(f"Overall Energy: {overall_energy:.2f}")
+        print("      OVERALL KPI SUMMARY     ")
+        print("==============================")
+        print(f"Overall Discovery Success Rate:   {overall_mean_success:.2f}%")
+        print(f"Overall Latency (s):              {overall_latency:.2f}")
+        print(f"Overall Energy per Cycle (J):     {overall_energy:.5f}")
+        print(f"Overall ACKs Received:            {overall_acks_vals:.2f}")
+        print(f"Overall Sync Attempts:            {overall_sync_tries_vals:.2f}")
+        print(f"Overall Sync Successes:           {overall_sync_success_vals:.2f}%")
+        print(f"Energy per Successful Discovery:  {overall_success_disc_e:.5f} J")
         print("==============================\n")
 
         # Energy Graph
