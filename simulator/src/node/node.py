@@ -58,6 +58,7 @@ class Node:
         self.harvester.harvest(duration, self.local_time())
         
         self.state = State.Idle
+        self.kpi.add_e(energy_to_use)
 
         return Network.messages_received(self)
 
@@ -78,6 +79,7 @@ class Node:
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
+        self.kpi.add_e(E_TX)
         self.state = State.Idle
 
     def receive(self, msg):
@@ -96,9 +98,9 @@ class Node:
             "offset": time_offset,
             "last_meet": self.local_time(),
         }
+        self.kpi.receive_discovery(self.listen_time, self.local_time())
 
-        self.kpi.receive_discovery(self.local_time())
-
+        self.kpi.add_e(E_RX)
         self.state = State.Receive
 
     def local_time(self):
