@@ -20,7 +20,7 @@ class Plotter:
         """
         for run_index, checkpoint_data in enumerate(checkpoint_results_list):
             for checkpoint_time, (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e) in checkpoint_data.items():
-                # Convert checkpoint_time back to days for organization
+
                 days = checkpoint_time / ONE_DAY
                 
                 if days not in self.results:

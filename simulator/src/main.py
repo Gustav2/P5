@@ -10,6 +10,11 @@ from .core.plotter import Plotter
 
 from .config import NODES, RANGE, ONE_DAY
 
+def plot(Network):
+    EnergyLogger.plot()
+    topo = NetworkTopology(Network.nodes)
+    topo.save("topology.png")    
+
 def simulate_with_checkpoints(checkpoints):
     """Run simulation once and collect metrics at specified time intervals."""
     env = simpy.Environment()
@@ -33,9 +38,9 @@ def simulate_with_checkpoints(checkpoints):
         total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
         total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
         
-        avg_syncs = mean([cycle["sync_received"] for node in nodes for cycle in node.sync_cycles]) if total_sync > 0 else 0
-        avg_acks = mean([cycle["acks_received"] for node in nodes for cycle in node.sync_cycles]) if total_ack > 0 else 0
-        sync_success_rate = (total_ack / tried_sync_with * 100) if tried_sync_with > 0 else 0
+        avg_acks = total_ack / NODES
+        avg_syncs = total_sync / NODES
+        sync_success_rate = (total_sync + total_ack) / tried_sync_with * 100 if tried_sync_with > 0 else 0
 
         checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e)
     
@@ -50,8 +55,8 @@ def simulate(number_of_runs, duration_days, seed):
         random.seed(current_seed)
         Network.nodes = []
         Network.mailboxes = {}
-
-        print(f"Running simulation {run + 1}/{number_of_runs}...")
+        
+        print(f"Running simulation {run + 1}/{number_of_runs}... using SEED={current_seed}")
         checkpoint_data = simulate_with_checkpoints(checkpoints)
         checkpoint_results_list.append(checkpoint_data)
         print(f"Simulation {run + 1} complete!")
@@ -60,16 +65,11 @@ def simulate(number_of_runs, duration_days, seed):
     results = plotter.evaluation(checkpoint_results_list)
     plotter.plot_results(results)
 
-def main():
-
+if __name__ == "__main__":
+    
     number_of_runs = 3
     duration_days = list(range(1, 11))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
 
-    EnergyLogger.plot(chunks_days=2)
-    NetworkTopology(Network.nodes).save()
-
-if __name__ == "__main__":
-    main()
