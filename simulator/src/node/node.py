@@ -179,7 +179,7 @@ class Node:
                 yield transmit_process
                 if transmit_process.value:
                     self.update_neighbor(sender, sender_time)
-        elif (type == Package.ACK and to == self.id) or sender in self.sync_with:
+        elif type == Package.ACK and (to == self.id or sender in self.sync_with):
                 self.sync_cycles[-1]["acks_received"] += 1
                 self.update_neighbor(sender, sender_time)
 
@@ -192,7 +192,7 @@ class Node:
         for id, neigh in self.neighbors.items():
             drift_rate = self.estimate_drift(id)
             
-            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            my_sync_time = neigh["last_meet_mine"] + (SYNC_INTERVAL / 2) / drift_rate
             current_meet_in = my_sync_time - current_time
 
             if node_id == id:
@@ -256,7 +256,7 @@ class Node:
         for node_id, neigh in self.neighbors.items():
             drift_rate = neigh.get("drift_rate", 1.0)
             
-            my_sync_time = neigh["last_meet_mine"] + SYNC_INTERVAL / drift_rate
+            my_sync_time = neigh["last_meet_mine"] + (SYNC_INTERVAL / 2) / drift_rate
             meet_in = my_sync_time - current_time
             
             if soonest - SYNC_TIME/2 <= meet_in <= soonest + SYNC_TIME/2:
