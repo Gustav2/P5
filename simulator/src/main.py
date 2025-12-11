@@ -62,7 +62,7 @@ def simulate(number_of_runs, duration_days, seed):
     plotter.plot_results(results)
 
 if __name__ == "__main__":
-    
+    print("Protocol Version 1.1")
     number_of_runs = 3
     duration_days = list(range(1, 11))
     seed = 42
