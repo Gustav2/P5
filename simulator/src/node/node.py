@@ -113,6 +113,7 @@ class Node:
         yield self.env.timeout(duration)
         self.capacitor.harvest(duration)
         
+        self.kpi.add_e(energy_to_use)
         self.state = State.Idle
 
         return Network.messages_received(self)
@@ -136,6 +137,7 @@ class Node:
         yield self.env.timeout(random.uniform(*DELAY_RANGE))
         Network.broadcast(self, msg)
 
+        self.kpi.add_e(E_TX)
         self.state = State.Idle
 
         return True
@@ -156,6 +158,7 @@ class Node:
         sender_time = msg['time']
 
         self.state = State.Receive
+        self.kpi.add_e(E_RX)
 
         if type == Package.DISC:
             if self.neighbors.get(sender) == None or self.soonest_sync(sender) < 0:

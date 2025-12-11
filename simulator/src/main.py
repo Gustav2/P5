@@ -8,7 +8,7 @@ from .core.network import Network
 from .core.energy_logger import EnergyLogger
 from .core.network_topology import NetworkTopology
 
-from .config import NODES, SIM_TIME, RANGE
+from .config import NODES, SIM_TIME, RANGE, ONE_DAY
 
 def main():
     env = simpy.Environment()
@@ -25,6 +25,9 @@ def main():
     e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
     success_disc_e = mean([n.kpi.get_success_disc_e() for n in nodes])
 
+    total_e_used = sum([node.kpi.e_total for node in nodes])
+
+    print(f"Avg energy used per day: {total_e_used / NODES / (SIM_TIME / ONE_DAY)} J")
     print(f"Energy usage per DISC cycle: {e_per_cycle} J")
     print(f"Time till first DISC receive: {avg_time} sec")
     print(f"Energy per successfull DISC cycle: {success_disc_e} J")
