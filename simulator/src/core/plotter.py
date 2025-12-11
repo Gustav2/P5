@@ -67,6 +67,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy (J)")
         plt.grid(True)
+        plt.tight_layout()  
         plt.savefig("energy_vs_days.png")
 
         # Latency Graph
