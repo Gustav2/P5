@@ -8,14 +8,9 @@ from .core.energy_logger import EnergyLogger
 from .core.network_topology import NetworkTopology
 from .core.plotter import Plotter
 
-from .config import NODES, RANGE, ONE_DAY
+from .config import NODES, RANGE, ONE_DAY  
 
-def plot(Network):
-    EnergyLogger.plot()
-    topo = NetworkTopology(Network.nodes)
-    topo.save("topology.png")    
-
-def simulate_with_checkpoints(checkpoints):
+def simulate_with_checkpoints(checkpoints, run):
     """Run simulation once and collect metrics at specified time intervals."""
     env = simpy.Environment()
     nodes = [Node(env, i, random.uniform(0,RANGE), random.uniform(0,RANGE)) for i in range(NODES)]
@@ -32,6 +27,9 @@ def simulate_with_checkpoints(checkpoints):
         e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
         checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success)
     
+    EnergyLogger.plot()
+    NetworkTopology(Network.nodes).save(filename = f"topology_run{run+1}")
+
     return checkpoint_results
 
 def simulate(number_of_runs, duration_days, seed):
@@ -45,7 +43,7 @@ def simulate(number_of_runs, duration_days, seed):
         Network.mailboxes = {}
         
         print(f"Running simulation {run + 1}/{number_of_runs}... using SEED={current_seed}")
-        checkpoint_data = simulate_with_checkpoints(checkpoints)
+        checkpoint_data = simulate_with_checkpoints(checkpoints, run)
         checkpoint_results_list.append(checkpoint_data)
         print(f"Simulation {run + 1} complete!")
 
@@ -60,6 +58,3 @@ if __name__ == "__main__":
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
-
-    EnergyLogger.plot(chunks_days=2)
-    NetworkTopology(Network.nodes).save()
