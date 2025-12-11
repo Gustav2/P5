@@ -89,7 +89,7 @@ class Node:
                         heard = False
                         
                         for msg in messages: # type: ignore
-                            if msg['from'] in sync_partners and msg['type'] in (Package.ACK, Package.SYNC):
+                            if msg['from'] in sync_partners and msg['type'] == Package.SYNC:
                                 heard = True
                                 break
 
@@ -173,7 +173,7 @@ class Node:
 
                 if update_table:
                     self.update_neighbor(sender, sender_time)
-        elif type == Package.SYNC and self.is_sync and sender in self.neighbors and len(self.sync_cycles):
+        elif type == Package.SYNC and self.is_sync and len(self.sync_cycles):
                 self.sync_cycles[-1]["sync_received"] += 1
 
                 yield self.env.timeout(random.uniform(*ACK_SEND_DELAY_RANGE))
@@ -182,7 +182,13 @@ class Node:
                 yield transmit_process
                 if transmit_process.value:
                     self.update_neighbor(sender, sender_time)
-        elif type == Package.ACK and (to == self.id or sender in self.sync_with):
+        elif type == Package.ACK and self.is_sync and len(self.sync_with): #(to == self.id or sender in self.sync_with):
+                if len(self.sync_cycles):
+                    self.sync_cycles.append({
+                        "nodes": len(self.sync_with), 
+                        "sync_received": 0, 
+                        "acks_received": 0
+                    })
                 self.sync_cycles[-1]["acks_received"] += 1
                 self.update_neighbor(sender, sender_time)
 
