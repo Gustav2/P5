@@ -160,7 +160,7 @@ class Node:
         self.state = State.Receive
         self.kpi.add_e(E_RX)
 
-        if type == Package.DISC:
+        if type == Package.DISC and not self.is_sync:
             if self.neighbors.get(sender) == None or self.soonest_sync(sender) < 0:
                 update_table = to == None or to == self.id
 
