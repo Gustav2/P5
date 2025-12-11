@@ -33,18 +33,14 @@ def main():
     print(f"Energy per successfull DISC cycle: {success_disc_e} J")
     print(f"DISC success rate: {avg_success} %")
 
-    tota_packages_sent = 0
+    tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
+    total_packages_sent = 0
     for node in nodes:
         for cycle in node.sync_cycles:
-            tota_packages_sent += min(cycle["sync_received"] + cycle["acks_received"], cycle["nodes"])
+            total_packages_sent += min(cycle["sync_received"] + cycle["acks_received"], cycle["nodes"])
 
-    tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
-    total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
-    total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
 
-    print(f"Avg SYNCs tries: {total_sync / NODES}")
-    print(f"Avg ACKs received: {total_ack / NODES}")
-    print(f"Sync success rate: {tota_packages_sent / tried_sync_with * 100:.2f}%")
+    print(f"Sync success rate: {total_packages_sent / tried_sync_with * 100:.2f}%")
 
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save()
