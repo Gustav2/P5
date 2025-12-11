@@ -88,10 +88,6 @@ class Plotter:
         print(f"Overall Latency {overall_latency:.2f}")
         print(f"Overall Energy: {overall_energy:.2f}")
         print("==============================\n")
-        
-        # Mean per day (across runs)
-        means = s_array.mean(axis=1)
-        print("Mean:",means)
 
         # Energy Graph
         plt.figure()
@@ -139,6 +135,7 @@ class Plotter:
 
         # Mean per day (across runs)
         means = s_array.mean(axis=1)
+        print("Mean:",means)
 
         # Sample standard deviation per day (ddof=1 → unbiased estimate)
         stds = s_array.std(axis=1, ddof=1)
