@@ -19,10 +19,9 @@ class Plotter:
                                     Each dict maps checkpoint_time -> (e_per_cycle, avg_time, avg_success, ...)
         """
         for run_index, checkpoint_data in enumerate(checkpoint_results_list):
-            for checkpoint_time, (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e) in checkpoint_data.items():
-
+            for checkpoint_time, (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e,e_sync_per_cycle) in checkpoint_data.items():
                 days = checkpoint_time / ONE_DAY
-                
+
                 if days not in self.results:
                     self.results[days] = {
                         'e': [], 
@@ -32,9 +31,12 @@ class Plotter:
                         'sync_tries': [], 
                         'acks_received': [], 
                         'sync_success': [], 
-                        'success_disc_e': []
+                        'success_disc_e': [],
+                        'e_sync_per_cycle': []
+
                     }
                 
+                e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e,e_sync_per_cycle = checkpoint_data[checkpoint_time]
                 self.results[days]['e'].append(e_per_cycle)
                 self.results[days]['t'].append(avg_time)
                 self.results[days]['s'].append(avg_success)
@@ -43,16 +45,18 @@ class Plotter:
                 self.results[days]['acks_received'].append(avg_acks)
                 self.results[days]['sync_success'].append(sync_success_rate)
                 self.results[days]['success_disc_e'].append(success_disc_e)
+                self.results[days]['e_sync_per_cycle'].append(e_sync_per_cycle)
                 
-                print("----------------------------")
-                print(f"Simulation duration: {days} days (Run {run_index+1})")
-                print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
-                print(f"Energy Consumption per Successful Discovery Cycle: {success_disc_e} J")
-                print(f"Discovery Latency: {avg_time} s")
-                print(f"Discovery Success Rate: {avg_success} %")
-                print(f"Avg SYNCs sent: {avg_syncs}")
-                print(f"Avg ACKs received: {avg_acks}")
-                print(f"Sync success rate: {sync_success_rate} %")
+                #print("----------------------------")
+                #print(f"Simulation duration: {days} days (Run {run_index+1})")
+                #print(f"Energy Consumption per Discovery Cycle: {e_per_cycle} J")
+                #print(f"Energy Consumption per Successful Discovery Cycle: {success_disc_e} J")
+                #print(f"Discovery Latency: {avg_time} s")
+                #print(f"Discovery Success Rate: {avg_success} %")
+                #print(f"Avg SYNCs sent: {avg_syncs}")
+                #print(f"Avg ACKs received: {avg_acks}")
+                #print(f"Sync success rate: {sync_success_rate} %")
+                #print(f"e_sync_per_cycle {sync_success_rate} %")
         
         # Convert to averages
         for days in self.results:
@@ -64,7 +68,8 @@ class Plotter:
                 mean(self.results[days]['sync_tries']),
                 mean(self.results[days]['acks_received']),
                 mean(self.results[days]['sync_success']),
-                mean(self.results[days]['success_disc_e'])
+                mean(self.results[days]['success_disc_e']),
+                mean(self.results[days]['e_sync_per_cycle']) 
             )
         
         return self.results
@@ -78,14 +83,30 @@ class Plotter:
         sync_tries_vals = [results[d][4] for d in days]
         acks_vals = [results[d][5] for d in days]
         sync_success_vals = [results[d][6] for d in days]
-
+        success_disc_e = [results[d][7] for d in days]
+        e_sync_per_cycle_vals = [results[d][8] for d in days]
+        
         overall_mean_success = mean(s_vals)
-        overall_latency= mean(t_vals)
-        overall_energy= mean(e_vals)
+        overall_latency = mean(t_vals)
+        overall_energy = mean(e_vals)
+        overall_acks_vals = mean(acks_vals)
+        overall_sync_tries_vals = mean(sync_tries_vals)
+        overall_sync_success_vals = mean(sync_success_vals)
+        overall_success_disc_e = mean(success_disc_e)
+        overall_e_sync_per_cycle = mean(e_sync_per_cycle_vals)
+
         print("\n==============================")
-        print(f"Overall Discovery Success Rate: {overall_mean_success:.2f}%")
-        print(f"Overall Latency {overall_latency:.2f}")
-        print(f"Overall Energy: {overall_energy:.2f}")
+        print("      OVERALL KPI SUMMARY     ")
+        print("==============================")
+        print(f"Overall Discovery Success Rate:   {overall_mean_success:.2f}%")
+        print(f"Overall Latency (s):              {overall_latency:.2f}")
+        print(f"Overall Energy per Cycle (J):     {overall_energy:.5f}")
+        print(f"Overall ACKs Received:            {overall_acks_vals:.2f}")
+        print(f"Overall Sync Attempts:            {overall_sync_tries_vals:.2f}")
+        print(f"Overall Sync Successes:           {overall_sync_success_vals:.2f}%")
+        print(f"Energy per Successful Discovery:  {overall_success_disc_e:.5f} J")
+        print(f"Energy per Successful Discovery:  {overall_success_disc_e:.5f} J")
+        print(f"Energy per Sync Cycle (mean):     {overall_e_sync_per_cycle:.5f} J/cycle")
         print("==============================\n")
 
         # Energy Graph
@@ -95,7 +116,17 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy (J)")
         plt.grid(True)
+        plt.tight_layout()
         plt.savefig("energy_vs_days.png")
+
+        # Energy for successfull discovery Graph
+        plt.figure()
+        plt.plot(days, success_disc_e, marker='o',color='orange')
+        plt.title("Energy Consumption per Successful Discovery Cycle vs Duration")
+        plt.xlabel("Simulation Duration (days)")
+        plt.ylabel("Energy (J)")
+        plt.grid(True)
+        plt.savefig("energy_success_vs_days.png")
 
         # Latency Graph
         plt.figure()
@@ -177,8 +208,16 @@ class Plotter:
         # SYNC Success Rate Graph
         plt.figure()
         plt.plot(days, sync_success_vals, marker='o', color='purple')
-        plt.title("SYNC Success Rate vs Duration")
+        plt.title("SYNC Success Rate (All Runs) vs Duration\n(with 95% CI across runs)")
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("SYNC Success Rate (%)")
         plt.grid(True)
         plt.savefig("sync_success_vs_days.png")
+        
+        plt.figure()
+        plt.plot(days, e_sync_per_cycle_vals, marker='o')
+        plt.title("Energy Consumption per SYNC Cycle vs Duration")
+        plt.xlabel("Simulation Duration (days)")
+        plt.ylabel("Energy per Sync Cycle (J)")
+        plt.grid(True)
+        plt.savefig("Energy Consumption per SYNC Cycle vs Duration.png")

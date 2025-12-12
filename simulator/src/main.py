@@ -42,7 +42,45 @@ def simulate_with_checkpoints(checkpoints, run):
         avg_syncs = total_sync / NODES
         sync_success_rate = (total_packages_sent / tried_sync_with * 100) if tried_sync_with > 0 else 0
 
-        checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e)
+        total_e_used_cp = sum(n.kpi.e_total for n in nodes)
+        total_e_discovery_cp = sum(n.kpi.disc_e for n in nodes)
+        total_e_sync_cp = total_e_used_cp - total_e_discovery_cp
+
+        sync_cycles_cp = total_sync + total_ack
+        e_sync_per_cycle_cp = (total_e_sync_cp / sync_cycles_cp if sync_cycles_cp > 0 else 0)
+
+        checkpoint_results[checkpoint_time] = (
+            e_per_cycle,
+            avg_time,
+            avg_success,
+            avg_syncs,
+            avg_acks,
+            sync_success_rate,
+            success_disc_e,
+            e_sync_per_cycle_cp,   # <--- this is what you’ll plot later
+        )
+    
+
+
+    total_e_used = sum(n.kpi.e_total for n in nodes)
+    total_e_discovery = sum(n.kpi.disc_e for n in nodes)
+    total_e_sync = total_e_used - total_e_discovery
+
+    tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
+    total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
+    total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
+
+    sync_cycles = total_sync + total_ack
+    e_sync_per_cycle = total_e_sync / sync_cycles if sync_cycles > 0 else 0
+
+    sim_days = max(checkpoints) / ONE_DAY
+    avg_energy_per_day = total_e_used / (NODES * sim_days)
+
+    print(f"\n=== RUN {run+1} ENERGY SUMMARY ===")
+    print(f"Total energy used (all nodes):        {total_e_used:.6f} J")
+    print(f"Average energy per node per day:      {avg_energy_per_day:.6f} J/day")
+    print(f"Energy used for SYNC per sync cycle:  {e_sync_per_cycle:.6f} J/cycle")
+    print("=====================================\n")
     
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save(filename = f"topology_run{run+1}")
@@ -71,7 +109,7 @@ def simulate(number_of_runs, duration_days, seed):
 if __name__ == "__main__":
     
     number_of_runs = 3
-    duration_days = list(range(1, 31))
+    duration_days = list(range(1, 81))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
