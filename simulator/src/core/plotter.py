@@ -220,4 +220,4 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy per Sync Cycle (J)")
         plt.grid(True)
-        plt.savefig("Energy Consumption per SYNC Cycle vs Duration.png")
+        plt.savefig("Energy_Consumption_per_SYNC_Cycle_vs_Duration.png")
