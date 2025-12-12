@@ -30,7 +30,8 @@ class Plotter:
                         's_list': [],
                         'sync_tries': [], 
                         'acks_received': [], 
-                        'sync_success': [], 
+                        'sync_success': [],
+                        'sync_success_list': [], 
                         'success_disc_e': [],
                         'e_sync_per_cycle': []
 
@@ -44,6 +45,7 @@ class Plotter:
                 self.results[days]['sync_tries'].append(avg_syncs)
                 self.results[days]['acks_received'].append(avg_acks)
                 self.results[days]['sync_success'].append(sync_success_rate)
+                self.results[days]['sync_success_list'].append(sync_success_rate)
                 self.results[days]['success_disc_e'].append(success_disc_e)
                 self.results[days]['e_sync_per_cycle'].append(e_sync_per_cycle)
                 
@@ -68,6 +70,7 @@ class Plotter:
                 mean(self.results[days]['sync_tries']),
                 mean(self.results[days]['acks_received']),
                 mean(self.results[days]['sync_success']),
+                self.results[days]['sync_success_list'],
                 mean(self.results[days]['success_disc_e']),
                 mean(self.results[days]['e_sync_per_cycle']) 
             )
@@ -83,8 +86,9 @@ class Plotter:
         sync_tries_vals = [results[d][4] for d in days]
         acks_vals = [results[d][5] for d in days]
         sync_success_vals = [results[d][6] for d in days]
-        success_disc_e = [results[d][7] for d in days]
-        e_sync_per_cycle_vals = [results[d][8] for d in days]
+        sync_success_list = [results[d][7] for d in days]
+        success_disc_e = [results[d][8] for d in days]
+        e_sync_per_cycle_vals = [results[d][9] for d in days]
         
         overall_mean_success = mean(s_vals)
         overall_latency = mean(t_vals)
@@ -144,7 +148,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Success Rate (%)")
         plt.grid(True)
-        plt.savefig("success_vs_days.png")
+        plt.savefig("disc_success_vs_days.png")
 
         # Success of all runs graph, with 95% CI
         plt.figure()
@@ -185,7 +189,7 @@ class Plotter:
         plt.ylabel("Success Rate (%)")
         plt.legend()
         plt.grid(True)
-        plt.savefig("success_list_vs_days.png")
+        plt.savefig("disc_success_list_vs_days.png")
 
         # SYNC Tries Graph
         plt.figure()
@@ -213,6 +217,34 @@ class Plotter:
         plt.ylabel("SYNC Success Rate (%)")
         plt.grid(True)
         plt.savefig("sync_success_vs_days.png")
+
+        # SYNC Success Rate Graph with 95% CI
+        plt.figure()
+        
+        # Convert sync_success_list to array: shape (n_days, n_runs)
+        sync_array = np.array(sync_success_list)
+        means_sync = sync_array.mean(axis=1)
+        stds_sync = sync_array.std(axis=1, ddof=1)
+        
+        alpha = 0.05
+        dof = sync_array.shape[1] - 1
+        t_crit = stats.t.ppf(1 - alpha/2, dof)
+        margin_sync = t_crit * stds_sync / np.sqrt(sync_array.shape[1])
+        lower_sync = means_sync - margin_sync
+        upper_sync = means_sync + margin_sync
+        
+        # Optional: keep the individual run lines (faint)
+        for run_index, day_success_rates in enumerate(zip(*sync_success_list)):
+            plt.plot(days, day_success_rates, alpha=0.3, label=f'Run {run_index+1}')
+
+        plt.plot(days, means_sync, marker='o', linewidth=2, label='Mean sync success rate')
+        plt.fill_between(days, lower_sync, upper_sync, alpha=0.2, label='95% CI')
+        plt.title("SYNC Success Rate vs Duration\n(with 95% CI across runs)")
+        plt.xlabel("Simulation Duration (days)")
+        plt.ylabel("SYNC Success Rate (%)")
+        plt.legend()
+        plt.grid(True)
+        plt.savefig("sync_success_list_vs_days.png")
         
         plt.figure()
         plt.plot(days, e_sync_per_cycle_vals, marker='o')

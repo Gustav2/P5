@@ -10,12 +10,15 @@ __pycache__
 
 energy_plots/
 acks_vs_days.png
+disc_success_list_vs_days.png
+disc_success_vs_days.png
 energy_plot.png
 energy_success_vs_days.png
 energy_vs_days.png
 latency_vs_days.png
 success_list_vs_days.png
 success_vs_days.png
+sync_success_list_vs_days.png
 sync_success_vs_days.png
 sync_tries_vs_days.png
 Energy_Consumption_per_SYNC_Cycle_vs_Duration.png
