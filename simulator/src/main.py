@@ -85,11 +85,13 @@ def simulate_with_checkpoints(checkpoints, run):
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save(filename = f"topology_run{run+1}")
 
-    return checkpoint_results
+    return checkpoint_results,avg_energy_per_day
 
 def simulate(number_of_runs, duration_days, seed):
     checkpoints = [int(days * ONE_DAY) for days in duration_days]
     checkpoint_results_list = []
+    avg_energy_days = []
+    e_sync_per_cycle_runs = [] 
 
     for run in range(number_of_runs):
         current_seed = seed + run
@@ -98,9 +100,18 @@ def simulate(number_of_runs, duration_days, seed):
         Network.mailboxes = {}
         
         print(f"Running simulation {run + 1}/{number_of_runs}... using SEED={current_seed}")
-        checkpoint_data = simulate_with_checkpoints(checkpoints, run)
+        checkpoint_data,avg_energy_per_day = simulate_with_checkpoints(checkpoints, run)
         checkpoint_results_list.append(checkpoint_data)
+        avg_energy_days.append(avg_energy_per_day) 
         print(f"Simulation {run + 1} complete!")
+    overall_avg_energy_per_day = mean(avg_energy_days)
+    version_0_energyValue = 13.06808
+    version_1_energyValue = 12.53
+    print("\n===== OVERALL AVERAGE ENERGY PER DAY (ALL RUNS) =====")
+    print(f"Average energy used per node per day across ALL runs: {overall_avg_energy_per_day:.6f} J")
+    print(f"Energy Savings Ratio (ESR)(v0): {1 - (overall_avg_energy_per_day / version_0_energyValue):.2f}")
+    print(f"Energy Savings Ratio (ESR)(v1): {1 - (overall_avg_energy_per_day / version_1_energyValue):.2f}")
+    print("=====================================================\n")
 
     plotter = Plotter()
     results = plotter.evaluation(checkpoint_results_list)
