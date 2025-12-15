@@ -40,7 +40,7 @@ class Node:
 
             # Sync part
             energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
-            idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync, self.local_time())
+            idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync)
             (sync_with, sync_in) = self.soonest_sync()
 
             # Pick what's sooner and prioritize
@@ -51,12 +51,12 @@ class Node:
                 idle_time = sync_in
             else:
                 self.is_sync = False
-                idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
+                idle_time = self.harvester.time_to_charge_to(energy_to_use)
 
             self.listen_time = listen_time
 
             yield self.env.timeout(idle_time)
-            self.harvester.harvest(idle_time, self.local_time())
+            self.harvester.harvest(idle_time)
 
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
@@ -105,7 +105,7 @@ class Node:
         self.state = State.Receive
         self.harvester.discharge(energy_to_use)        
         yield self.env.timeout(available_seconds)
-        self.harvester.harvest(available_seconds, self.local_time())
+        self.harvester.harvest(available_seconds)
         
         self.kpi.add_e(energy_to_use)
         self.state = State.Idle
@@ -119,7 +119,7 @@ class Node:
         self.state = State.Transmit
         self.harvester.discharge(E_TX)
         yield self.env.timeout(PT_TIME)
-        self.harvester.harvest(PT_TIME, self.local_time())
+        self.harvester.harvest(PT_TIME)
 
         if package_type == Package.SYNC:
             self.sync_tries += 1
@@ -144,7 +144,7 @@ class Node:
         
         self.harvester.discharge(E_RX)
         yield self.env.timeout(PT_TIME)
-        self.harvester.harvest(PT_TIME, self.local_time())
+        self.harvester.harvest(PT_TIME)
 
         type = Package(msg['type'])
         sender = msg['id']
