@@ -21,7 +21,7 @@ E_RECEIVE = 0.03564 / 1_000 # Energy used per millisecond in receiveing mode
 E_TX = 0.1023 / 1_000 * PT_TIME # Energy used to transmit the packet
 E_RX = E_RECEIVE * PT_TIME # Energy used to receive and decode the packet
 
-LISTEN_TIME_RANGE = (100, 500) # Range for time listening in milliseconds
+LISTEN_TIME_RANGE = (1_000, 2_000) # Range for time listening in milliseconds
 
 CLOCK_DRIFT_PER_DAY = 1_730 # Max clock drift per day
 CLOCK_DRIFT_MULTIPLIER_RANGE = (
