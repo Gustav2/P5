@@ -41,6 +41,6 @@ class Harvester:
             daytime_lux = self.lux * max(0, math.sin(math.pi * normalized_time))
 
         # We already include IDLE discrage into harvesting
-        harvest_rate = (0.9083 * daytime_lux - 9.2714) / 10 ** 6 / 1_000 - E_IDLE
+        harvest_rate = (0.9083 * daytime_lux - 9.2714) / 10 ** 6 / 1_000
         
         return harvest_rate
