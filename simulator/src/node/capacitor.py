@@ -29,5 +29,5 @@ class Capacitor:
     
     def harvest_rate(self):
         # We already include IDLE discrage into harvesting
-        harvest_rate = (0.9083 * self.lux - 9.2714) / 10 ** 6 / 1_000 - E_IDLE
+        harvest_rate = (0.9083 * self.lux - 9.2714) / 10 ** 6 / 1_000
         return harvest_rate
