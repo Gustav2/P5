@@ -83,7 +83,9 @@ class Node:
                         self.sync_cycles.append({
                             "nodes": len(sync_partners), 
                             "sync_received": 0, 
-                            "acks_received": 0
+                            "acks_received": 0,
+                            "sync_received_from_expected": 0,
+                            "acks_received_from_expected": 0
                         })
 
                         heard = False
@@ -175,6 +177,8 @@ class Node:
                     self.update_neighbor(sender, sender_time)
         elif type == Package.SYNC and self.is_sync and len(self.sync_cycles):
                 self.sync_cycles[-1]["sync_received"] += 1
+                if sender in self.sync_cycles[-1]:
+                    self.sync_cycles[-1]['sync_recevived_from_expected'] += 1
 
                 yield self.env.timeout(random.uniform(*ACK_SEND_DELAY_RANGE))
                 transmit_process = self.env.process(self.transmit(Package.ACK, sender))
@@ -183,13 +187,17 @@ class Node:
                 if transmit_process.value:
                     self.update_neighbor(sender, sender_time)
         elif type == Package.ACK and self.is_sync and len(self.sync_with): #(to == self.id or sender in self.sync_with):
-                if len(self.sync_cycles):
+                if not len(self.sync_cycles):
                     self.sync_cycles.append({
                         "nodes": len(self.sync_with), 
                         "sync_received": 0, 
                         "acks_received": 0
                     })
-                self.sync_cycles[-1]["acks_received"] += 1
+
+                self.sync_cycles[-1]["acks_received_from_expected"] += 1
+                if sender in self.sync_cycles[-1]:
+                    self.sync_cycles[-1]['sync_recevived_from_expected'] += 1
+                
                 self.update_neighbor(sender, sender_time)
 
         return True

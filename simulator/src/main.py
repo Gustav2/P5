@@ -1,4 +1,5 @@
 import simpy, random
+import numpy
 
 from statistics import mean
 
@@ -20,8 +21,10 @@ def simulate_with_checkpoints(checkpoints, run):
         Network.register_node(n)
     
     checkpoint_results = {}
+
+    ssr_per_day = numpy.zeros(13)
     
-    for checkpoint_time in sorted(checkpoints):
+    for index, checkpoint_time in enumerate(sorted(checkpoints)):
         env.run(until=checkpoint_time)
         
         kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
@@ -32,6 +35,12 @@ def simulate_with_checkpoints(checkpoints, run):
         tried_sync_with = sum(cycle["nodes"] for node in nodes for cycle in node.sync_cycles)
         total_sync = sum(cycle["sync_received"] for node in nodes for cycle in node.sync_cycles)
         total_ack = sum(cycle["acks_received"] for node in nodes for cycle in node.sync_cycles)
+
+        total_sync_expected = sum(cycle["sync_received_from_expected"] for node in nodes for cycle in node.sync_cycles)
+        total_acks_expected = sum(cycle["acks_received_from_expected"] for node in nodes for cycle in node.sync_cycles)
+
+        if tried_sync_with > 0:
+            ssr_per_day[index] = (total_sync_expected + total_acks_expected) / tried_sync_with * 100 
 
         total_packages_sent = 0
         for node in nodes:
@@ -85,13 +94,13 @@ def simulate_with_checkpoints(checkpoints, run):
     EnergyLogger.plot(chunks_days=2)
     NetworkTopology(Network.nodes).save(filename = f"topology_run{run+1}")
 
-    return checkpoint_results,avg_energy_per_day
+    return checkpoint_results,avg_energy_per_day, ssr_per_day
 
 def simulate(number_of_runs, duration_days, seed):
     checkpoints = [int(days * ONE_DAY) for days in duration_days]
     checkpoint_results_list = []
     avg_energy_days = []
-    e_sync_per_cycle_runs = [] 
+    ssrs_per_day = [] 
 
     for run in range(number_of_runs):
         current_seed = seed + run
@@ -100,10 +109,20 @@ def simulate(number_of_runs, duration_days, seed):
         Network.mailboxes = {}
         
         print(f"Running simulation {run + 1}/{number_of_runs}... using SEED={current_seed}")
-        checkpoint_data,avg_energy_per_day = simulate_with_checkpoints(checkpoints, run)
+        checkpoint_data,avg_energy_per_day,ssr_per_day = simulate_with_checkpoints(checkpoints, run)
         checkpoint_results_list.append(checkpoint_data)
         avg_energy_days.append(avg_energy_per_day) 
+        ssrs_per_day.append(ssr_per_day)
         print(f"Simulation {run + 1} complete!")
+
+    print(ssrs_per_day)
+
+    for index in range(13):
+        vals = []
+        for i in range(2):
+            vals.append(ssrs_per_day[i][index])
+        print(f"Avg SSR for day {index + 1}: {mean(vals)}")
+
     overall_avg_energy_per_day = mean(avg_energy_days)
     version_0_energyValue = 13.06808
     version_1_energyValue = 12.53
