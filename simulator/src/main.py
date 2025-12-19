@@ -1,13 +1,13 @@
-import simpy, random, os, time
+import simpy, random, os, time, pickle
 from statistics import mean
 
 from .core.node import Node
 from .core.network import Network
-from .results.energy_logger import EnergyLogger
-from .results.network_topology import NetworkTopology
-from .results.plotter import Plotter
+from .plots.energy_logger import EnergyLogger
+from .plots.network_topology import NetworkTopology
+from .plots.plotter import Plotter
 
-from .config import NODES, ONE_DAY, SIM_DAYS, SEED, RUNS
+from .config import NODES, ONE_DAY, SIM_DAYS, SEED, RUNS, CLOCK_DRIFT_ENABLED
 
 def simulate_with_checkpoints(checkpoints, run):
     """Run simulation once and collect metrics at specified time intervals."""
@@ -92,8 +92,8 @@ def simulate_with_checkpoints(checkpoints, run):
     print(f"Average energy used per node per day: {avg_energy_per_day:.5f} J/day")
     print("===================================")
 
-    #EnergyLogger.plot(filename = f"v1_energy_plot_run_{run+1}")
-    #NetworkTopology(Network.nodes).save(filename = f"v1_topology_run{run+1}")
+    #EnergyLogger.plot(run=run+1)
+    #NetworkTopology(Network.nodes).save(run=run+1)
     print(f"Simulation {run + 1} complete!\n\n")
 
     return checkpoint_results, avg_energy_per_day, e_sync_per_cycle, discovery_progress
@@ -131,12 +131,23 @@ def simulate(number_of_runs, duration_days, seed):
     plotter.plot_results(results)
     plotter.plot_discovery_progress(discovery_data_all_runs, duration_days)
 
+    label = "drift_on" if CLOCK_DRIFT_ENABLED else "drift_off"
+
+    with open(f"results/results_{label}.pkl", "wb") as f:
+        pickle.dump(results, f)
+
+    print(f"Saved results to results/results_{label}.pkl")
+
+
 
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     figures_dir = os.path.join(current_dir, "../figures/")
+    results_dir = os.path.join(current_dir, "../results/")
     if not os.path.exists(figures_dir):
         os.makedirs(figures_dir)
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
 
     number_of_runs = RUNS
     duration_days = list(range(1, SIM_DAYS + 1))

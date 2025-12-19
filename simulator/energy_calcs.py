@@ -38,24 +38,25 @@ if __name__ == "__main__":
     PL = 11
 
     Tpacket = lora_toa(SF, BW, CR, PL)
-    Trx = 1  # seconds
+    Trx = 0.036  # seconds
     Tstandby = 86400  # seconds
     Tidle = 86400  # seconds
     energy_tx, energy_rx, energy_standby, energy_idle = lora_energy_consumption(Tpacket, Trx, Tstandby, Tidle)
     print(f"For Packet Length: {PL} bytes:")
-    print(f"TX Energy: {energy_tx/1000:.5f} mJ ({Tpacket:.3f} s)")
-    print(f"RX Energy: {energy_rx/1000:.5f} mJ ({Trx:.3f} s)")
+    print(f"TX Energy: {energy_tx/1000:.5f} J ({Tpacket:.3f} s)")
+    print(f"RX Energy: {energy_rx/1000:.5f} J ({Trx:.3f} s)")
     print(f"Standby Energy: {energy_standby:.2f} mJ ({energy_standby/1000:.10f} J) ({Tstandby:.3f} s)")
     print(f"Idle Energy: {energy_idle:.2f} mJ ({energy_idle/1000:.10f} J) ({Tidle:.3f} s)")
-    print((0.9083*16-9.2714)*10**-6 * 86400)
-    print((0.9083*20-9.2714)*10**-6 * 86400)
-    print((0.9083*28-9.2714)*10**-6 * 86400)
-    print((0.9083*50-9.2714)*10**-6 * 86400)
-    print((0.9083*200-9.2714)*10**-6 * 86400)
-    print((0.9083*500-9.2714)*10**-6 * 86400)
-    print((0.9083*6000-9.2714)*10**-6 * 86400)
+    #print((0.9083*16-9.2714)*10**-6 * 86400)
+    #print((0.9083*20-9.2714)*10**-6 * 86400)
+    #print((0.9083*28-9.2714)*10**-6 * 86400)
+    #print((0.9083*50-9.2714)*10**-6 * 86400)
+    #print((0.9083*200-9.2714)*10**-6 * 86400)
+    #print((0.9083*500-9.2714)*10**-6 * 86400)
+    #print((0.9083*6000-9.2714)*10**-6 * 86400)
 
-    print(2.3/1000)
-    print(3.5/8.21*100)
+    #print(2.3/1000)
+    #print(3.5/8.21*100)
 
-    
+    Disc = 0.117
+    Sync = 0.036 

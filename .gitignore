@@ -10,6 +10,8 @@ __pycache__
 
 energy_plots/
 figures/
+results/
 *.log
 *.png
 test*
+*.pkl

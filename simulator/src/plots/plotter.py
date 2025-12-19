@@ -4,11 +4,12 @@ import numpy as np
 from statistics import mean
 from scipy import stats
 
-from ..config import ONE_DAY, RUNS, NODES
+from ..config import ONE_DAY, RUNS, NODES, CLOCK_DRIFT_ENABLED
 
 class Plotter:
     def __init__(self):
         self.results = {}
+        self.scale = 50
 
     def evaluation(self, checkpoint_results_list):
         """
@@ -35,7 +36,7 @@ class Plotter:
                         'success_disc_e': [],
                         'e_sync_per_cycle': []
                     }
-                
+
                 e_per_cycle, avg_time, avg_success, avg_syncs, avg_acks, sync_success_rate, success_disc_e,e_sync_per_cycle = checkpoint_data[checkpoint_time]
                 self.results[days]['e'].append(e_per_cycle)
                 self.results[days]['t'].append(avg_time)
@@ -78,7 +79,7 @@ class Plotter:
     
     def plot_results(self, results): #New function bcs Andris plotting function won't work, and better to have a spearate one.
         days = list(results.keys())
-        e_vals = [results[d][0] for d in days]
+        e_vals = [results[d][0] / self.scale for d in days]
         t_vals = [results[d][1] for d in days]
         s_vals = [results[d][2] for d in days]
         s_list = [results[d][3] for d in days]
@@ -87,7 +88,7 @@ class Plotter:
         sync_success_vals = [results[d][6] for d in days]
         sync_success_list = [results[d][7] for d in days]
         success_disc_e = [results[d][8] for d in days]
-        e_sync_per_cycle_vals = [results[d][9] for d in days]
+        e_sync_per_cycle_vals = [results[d][9] / self.scale for d in days]
         
         overall_mean_success = mean(s_vals)
         overall_latency = mean(t_vals)
@@ -120,8 +121,10 @@ class Plotter:
         plt.ylabel("Energy (J)")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig("figures/v1_energy_consumption_disc_cycle_vs_duration.png", dpi=300, bbox_inches='tight')
-
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("figures/v1_energy_consumption_disc_cycle_vs_duration_drift_on.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("figures/v1_energy_consumption_disc_cycle_vs_duration_drift_off.png", dpi=300, bbox_inches='tight')
         # Energy for successfull discovery Graph
         #plt.figure()
         #plt.plot(days, success_disc_e, marker='o',color='orange')
@@ -178,7 +181,7 @@ class Plotter:
 
         # Optional: keep the individual run lines (faint)
         for run_index, day_success_rates in enumerate(zip(*s_list)):
-            plt.plot(days, day_success_rates, alpha=0.3, label=f'Run {run_index+1}')
+            plt.plot(days, day_success_rates, alpha=0.3)
 
         # Plot mean success rate
         plt.plot(days, means, marker='o', linewidth=2, label='Mean success rate')
@@ -191,7 +194,10 @@ class Plotter:
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig("figures/v1_disc_success_vs_duration.png", dpi=300, bbox_inches='tight')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("figures/v1_disc_success_vs_duration_drift_on.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("figures/v1_disc_success_vs_duration_drift_off.png", dpi=300, bbox_inches='tight')
 
         # SYNC Tries Graph
         #plt.figure()
@@ -240,7 +246,7 @@ class Plotter:
         
         # Optional: keep the individual run lines (faint)
         for run_index, day_success_rates in enumerate(zip(*sync_success_list)):
-            plt.plot(days, day_success_rates, alpha=0.3, label=f'Run {run_index+1}')
+            plt.plot(days, day_success_rates, alpha=0.3)
 
         plt.plot(days, means_sync, marker='o', linewidth=2, label='Mean sync success rate')
         plt.fill_between(days, lower_sync, upper_sync, alpha=0.2, label='95% CI')
@@ -250,7 +256,10 @@ class Plotter:
         plt.legend()
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig("figures/v1_sync_success_vs_duration.png", dpi=300, bbox_inches='tight')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("figures/v1_sync_success_vs_duration_drift_on.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("figures/v1_sync_success_vs_duration_drift_off.png", dpi=300, bbox_inches='tight')
 
         # Energy Consumption per SYNC Cycle Graph
         plt.figure()
@@ -260,7 +269,10 @@ class Plotter:
         plt.ylabel("Energy per Sync Cycle (J)")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig("figures/v1_energy_consumption_sync_cycle_vs_duration.png", dpi=300, bbox_inches='tight')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("figures/v1_energy_consumption_sync_cycle_vs_duration_drift_on.png", dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig("figures/v1_energy_consumption_sync_cycle_vs_duration_drift_off.png", dpi=300, bbox_inches='tight')
 
     def plot_discovery_progress(self, discovery_data_all_runs, duration_days):
         """
@@ -315,7 +327,10 @@ class Plotter:
         #ax.set_xlim(days[0], days[-1])
         
         plt.tight_layout()
-        plt.savefig('figures/v1_discovery_progress.png', dpi=300, bbox_inches='tight')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig('figures/v1_discovery_progress_drift_on.png', dpi=300, bbox_inches='tight')
+        else:
+            plt.savefig('figures/v1_discovery_progress_drift_off.png', dpi=300, bbox_inches='tight')
         
         # Print summary statistics
         print(f"\n=== Discovery Progress Summary ===")

@@ -1,7 +1,7 @@
 import simpy, random, math
 
 from ..core.network import Network
-from ..results.energy_logger import EnergyLogger
+from ..plots.energy_logger import EnergyLogger
 from .state import State, Package
 from .harvester import Harvester
 from .kpi import KPI

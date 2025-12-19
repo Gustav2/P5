@@ -2,7 +2,7 @@ LOW_POWERED_NODES = 18          # Low powered nodes
 HIGH_POWERED_NODES = 36         # High powered nodes
 NODES = LOW_POWERED_NODES + HIGH_POWERED_NODES # Amount of nodes in the simulation
 
-CLOCK_DRIFT_ENABLED = True      # Enable clock drift simulation
+CLOCK_DRIFT_ENABLED = False      # Enable clock drift simulation
 CLOCK_DRIFT_PER_DAY = 500_000   # Max clock drift per day
 
 RUNS = 10                        # Number of runs for the simulation
@@ -23,11 +23,11 @@ E_RECEIVE = 0.03564 / 1_000         # Energy used per millisecond in receiveing 
 E_TX = 0.00118                      # Energy used to transmit 11 bytes
 E_RX = E_RECEIVE * PT_TIME          # Energy used to receive and decode the packet
 
-LISTEN_TIME = 200                   # Range for time listening in milliseconds
-LISTEN_TIME_RANGE = (200, 200) 
+LISTEN_TIME = 10000                   # Range for time listening in milliseconds
+LISTEN_TIME_RANGE = (10000, 10000) 
 SYNC_INTERVAL = 7 * ONE_DAY         # How ofter nodes perform sync
-SYNC_TIME = 200                  # For how long sync is operated
-SYNC_TIME_RANGE = (75, 125)         # For how long node listens for a sync message, before sending one
+SYNC_TIME = 10000                  # For how long sync is operated
+SYNC_TIME_RANGE = (4000, 6000)         # For how long node listens for a sync message, before sending one
 SYNC_PREPARATION_TIME = 45 * 60 * 1_000 # For how long before a sync node starts chraging
 
 HIGH_LIGHT_RANGE_LUX = (100, 2000)  # Number of lux for a high powered device

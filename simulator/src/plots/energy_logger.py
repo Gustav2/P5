@@ -18,7 +18,7 @@ class EnergyLogger:
         cls.enabled = False
 
     @classmethod
-    def plot(cls, filename="figures/energy_plot.png"):
+    def plot(cls, run=""):
         if not cls.enabled:
             return
 
@@ -55,4 +55,7 @@ class EnergyLogger:
         plt.legend(loc='upper left', fontsize='small', ncol=2)
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig("figures/"+filename, dpi=300, bbox_inches='tight', facecolor='#fafafa')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("figures/energy_plot_drift_on_" + run +".png", dpi=300, bbox_inches='tight', facecolor='#fafafa')
+        else:
+            plt.savefig("figures/energy_plot_drift_off_" + run +".png", dpi=300, bbox_inches='tight', facecolor='#fafafa')

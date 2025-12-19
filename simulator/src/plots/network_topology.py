@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import colorsys
 from typing import List
-from ..config import LOW_POWERED_NODES
+from ..config import LOW_POWERED_NODES, CLOCK_DRIFT_ENABLED
 
 class NetworkTopology:
     def __init__(self, nodes: List):
@@ -98,7 +98,7 @@ class NetworkTopology:
             hue = i / max(n_edges, 1)
             edge['color'] = colorsys.hsv_to_rgb(hue, 0.4, 0.7)
     
-    def save(self, filename: str = "topology.png", figsize=(12, 12), node_size=400, show_labels=True):
+    def save(self, filename: str = "topology.png", figsize=(12, 12), node_size=400, show_labels=True, run=""):
         _, ax = plt.subplots(figsize=figsize)
         ax.set_aspect('equal')
         ax.set_facecolor('#fafafa')
@@ -124,5 +124,8 @@ class NetworkTopology:
         ax.axis('off')
         plt.title("Network Topology", fontsize=14, fontweight='bold')
         plt.tight_layout()
-        plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='#fafafa')
+        if CLOCK_DRIFT_ENABLED:
+            plt.savefig("network_topology_drift_on_" + run + ".png", dpi=300, bbox_inches='tight', facecolor='#fafafa')
+        else:
+            plt.savefig("network_topology_drift_off_" + run + ".png", dpi=300, bbox_inches='tight', facecolor='#fafafa')
         plt.close()
