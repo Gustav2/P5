@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from collections import defaultdict
-import math
+import math, os
 
 from ..config import *
 
@@ -18,7 +18,11 @@ class EnergyLogger:
         cls.enabled = False
 
     @classmethod
-    def plot(cls, filename="energy_plot.png"):
+    def plot(cls, filename="figures/energy_plot.png"):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        figures_dir = os.path.join(current_dir, "../../figures/")
+        if not os.path.exists(figures_dir):
+            os.makedirs(figures_dir)
         if not cls.enabled:
             return
 
@@ -45,14 +49,14 @@ class EnergyLogger:
         y_upper = max(max_energy * 1.15, E_TRESHOLD * 1.1)
         plt.ylim(0, y_upper)
 
-        plt.axhline(y=E_TRESHOLD, color='black', linestyle='--', linewidth=1.5, label='Threshold')
+        plt.axhline(y=E_TRESHOLD, color='black', linestyle='--', linewidth=1.5, label='Lower Limit')
         if E_MAX <= y_upper:
-            plt.axhline(y=E_MAX, color='black', linestyle='--', linewidth=1.5, label='Max')
+            plt.axhline(y=E_MAX, color='black', linestyle='--', linewidth=1.5, label='Higher Limit')
 
         plt.xlabel(f"Time ({time_unit})")
         plt.ylabel("Energy (joules)")
-        plt.title("Energy during Simulation")
+        plt.title("Energy Levels of Nodes Over Time")
         plt.legend(loc='upper left', fontsize='small', ncol=2)
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(filename)
+        plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='#fafafa')

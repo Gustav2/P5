@@ -123,5 +123,6 @@ class NetworkTopology:
         
         ax.axis('off')
         plt.tight_layout()
+        plt.title("Network Topology", fontsize=16)
         plt.savefig(filename, dpi=150, bbox_inches='tight', facecolor='#fafafa')
         plt.close()

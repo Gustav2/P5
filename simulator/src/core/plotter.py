@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 from statistics import mean
 from scipy import stats
@@ -9,6 +10,10 @@ from ..config import ONE_DAY
 class Plotter:
     def __init__(self):
         self.results = {}
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        figures_dir = os.path.join(current_dir, "../../figures/")
+        if not os.path.exists(figures_dir):
+            os.makedirs(figures_dir)
 
     def evaluation(self, checkpoint_results_list):
         """
@@ -119,7 +124,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy (J)")
         plt.grid(True)
-        plt.savefig("energy_vs_days.png")
+        plt.savefig("figures/energy_vs_days.png")
 
         # Energy for successfull discovery Graph
         plt.figure()
@@ -128,7 +133,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy (J)")
         plt.grid(True)
-        plt.savefig("energy_success_vs_days.png")
+        plt.savefig("figures/energy_success_vs_days.png")
 
         # Latency Graph
         plt.figure()
@@ -137,7 +142,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Latency (s)")
         plt.grid(True)
-        plt.savefig("latency_vs_days.png")
+        plt.savefig("figures/latency_vs_days.png")
 
         # Success Rate Graph
         plt.figure()
@@ -146,7 +151,7 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Success Rate (%)")
         plt.grid(True)
-        plt.savefig("success_vs_days.png")
+        plt.savefig("figures/success_vs_days.png")
 
         # Success of all runs graph, with 95% CI
         plt.figure()
@@ -158,7 +163,6 @@ class Plotter:
 
         # Mean per day (across runs)
         means = s_array.mean(axis=1)
-        print("Mean:",means)
 
         # Sample standard deviation per day (ddof=1 → unbiased estimate)
         stds = s_array.std(axis=1, ddof=1)
@@ -187,7 +191,7 @@ class Plotter:
         plt.ylabel("Success Rate (%)")
         plt.legend()
         plt.grid(True)
-        plt.savefig("success_list_vs_days.png")
+        plt.savefig("figures/success_list_vs_days.png")
 
         # SYNC Tries Graph
         plt.figure()
@@ -196,25 +200,25 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Average SYNCs Sent")
         plt.grid(True)
-        plt.savefig("sync_tries_vs_days.png")
+        plt.savefig("figures/sync_tries_vs_days.png")
 
         # ACKs Received Graph
         plt.figure()
         plt.plot(days, acks_vals, marker='o', color='blue')
-        plt.title("Average ACKs Received vs Duration")
+        plt.title("Average SYNC ACKs Received vs Duration")
         plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Average ACKs Received")
+        plt.ylabel("Average SYNC ACKs Received")
         plt.grid(True)
-        plt.savefig("acks_vs_days.png")
+        plt.savefig("figures/acks_vs_days.png")
 
         # SYNC Success Rate Graph
         plt.figure()
         plt.plot(days, sync_success_vals, marker='o', color='purple')
-        plt.title("Discovery Success Rate (All Runs) vs Duration\n(with 95% CI across runs)")
+        plt.title("Discovery Success Rate vs Duration")
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("SYNC Success Rate (%)")
         plt.grid(True)
-        plt.savefig("sync_success_vs_days.png")
+        plt.savefig("figures/sync_success_vs_days.png")
 
         # SYNC Success Rate Graph with 95% CI
         plt.figure()
@@ -242,7 +246,7 @@ class Plotter:
         plt.ylabel("SYNC Success Rate (%)")
         plt.legend()
         plt.grid(True)
-        plt.savefig("sync_success_list_vs_days.png")
+        plt.savefig("figures/sync_success_list_vs_days.png")
 
         # Energy Consumption per SYNC Cycle Graph
         plt.figure()
@@ -251,4 +255,4 @@ class Plotter:
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy per Sync Cycle (J)")
         plt.grid(True)
-        plt.savefig("Energy Consumption per SYNC Cycle vs Duration.png")
+        plt.savefig("figures/Energy Consumption per SYNC Cycle vs Duration.png")

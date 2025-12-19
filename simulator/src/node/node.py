@@ -9,13 +9,12 @@ from .kpi import KPI
 from ..config import *
 
 class Node:
-    def __init__(self, env: simpy.Environment, id: int, x: float, y: float):
+    def __init__(self, env: simpy.Environment, id: int):
         self.id = id
-        self.x, self.y = x, y
         self.state: State = State.Idle
         self.harvester = Harvester(id)
         self.env = env
-        self.clock_drift = random.uniform(*CLOCK_DRIFT_MULTIPLIER_RANGE)
+        self.clock_drift = random.randint(*NODE_START_TIMES)
 
         self.kpi = KPI()
         self.listen_time = 0
@@ -40,7 +39,7 @@ class Node:
 
             # Sync part
             energy_for_sync = SYNC_TIME * E_RECEIVE + E_TX + E_RX
-            idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync, self.local_time())
+            idle_time_for_sync = self.harvester.time_to_charge_to(energy_for_sync)
             (sync_with, sync_in) = self.soonest_sync()
 
             # Pick what's sooner and prioritize
@@ -51,12 +50,12 @@ class Node:
                 idle_time = sync_in
             else:
                 self.is_sync = False
-                idle_time = self.harvester.time_to_charge_to(energy_to_use, self.local_time())
+                idle_time = self.harvester.time_to_charge_to(energy_to_use)
 
             self.listen_time = listen_time
 
             yield self.env.timeout(idle_time)
-            self.harvester.harvest(idle_time, self.local_time())
+            self.harvester.harvest(idle_time)
 
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
@@ -66,6 +65,7 @@ class Node:
 
                 listen_for = random.uniform(*SYNC_TIME_RANGE) if self.is_sync else (listen_time / 2)
                 self.listen_process = self.env.process(self.listen(listen_for))
+                # [1]: Node 40 listens after it woke up
 
                 heard = True
                 try:
@@ -81,11 +81,13 @@ class Node:
                         self.transmit(Package.SYNC if self.is_sync else Package.DISC, 
                         sync_with if self.is_sync else None
                     ))
+                    # [2]: Node 40 transmits DISC to 39
 
                     if not self.is_sync:
                         self.kpi.send_discovery(listen_for)
                     
                     self.listen_process = self.env.process(self.listen(listen_time - listen_for))
+                    # [3]: Node 40 listens after transmitting DISC
                     try:
                         yield self.listen_process
                     except simpy.Interrupt:
@@ -104,8 +106,8 @@ class Node:
 
         self.state = State.Receive
         self.harvester.discharge(energy_to_use)        
-        yield self.env.timeout(available_seconds)
-        self.harvester.harvest(available_seconds, self.local_time())
+        yield self.env.timeout(min(duration, available_seconds))
+        self.harvester.harvest(min(duration, available_seconds))
         
         self.kpi.add_e(energy_to_use)
         self.state = State.Idle
@@ -119,7 +121,7 @@ class Node:
         self.state = State.Transmit
         self.harvester.discharge(E_TX)
         yield self.env.timeout(PT_TIME)
-        self.harvester.harvest(PT_TIME, self.local_time())
+        self.harvester.harvest(PT_TIME)
 
         if package_type == Package.SYNC:
             self.sync_tries += 1
@@ -127,9 +129,12 @@ class Node:
         msg = {
             'type': package_type, 
             'id': self.id,
-            "to": to,
+            'to': to,
             'time': self.local_time(),
         }
+
+        if msg['type'] == Package.DISC and msg['to'] == None:
+            self.kpi.actual_send_disc()
 
         self.kpi.add_e(E_TX)
 
@@ -144,13 +149,14 @@ class Node:
         
         self.harvester.discharge(E_RX)
         yield self.env.timeout(PT_TIME)
-        self.harvester.harvest(PT_TIME, self.local_time())
+        self.harvester.harvest(PT_TIME)
 
         type = Package(msg['type'])
         sender = msg['id']
         sender_time = msg['time']
         receiver = msg['to']
-        offset = math.floor((sender_time + self.local_time()) / 2)
+        #offset = math.floor((sender_time + self.local_time()) / 2)
+        offset = self.local_time()
 
         (_, time_to_meet) = self.soonest_sync(sender)
 
@@ -164,11 +170,17 @@ class Node:
                     "delay": offset,
                     "last_meet": self.local_time(),
                 }
-
+                #if receiver == None:
+                #    print(f"Node {self.id:02d} received    DISC     from {sender:02d}  at time {self.local_time()}")
+                if receiver == self.id:
+                    self.kpi.actual_disck_success()
+                #    print(f"Node {self.id:02d} received    ACK DISC from {sender:02d}  at time {self.local_time()}")
                 if receiver == None:
                     yield self.env.process(self.transmit(Package.DISC, sender))
-
+                    # [3]: Node 08 transmits DISC to 20 (82482247)
+                
                 if self.listen_process:
+                    #print("dicovery interrupting")
                     self.listen_process.interrupt('discovered')
         elif type == Package.SYNC and sender in self.neighbors:
             if self.id == receiver:
@@ -180,6 +192,7 @@ class Node:
                         "last_meet": self.local_time(),
                     }
                     if self.listen_process:
+                        #print("ack sent interrupt")
                         self.listen_process.interrupt('ack_sent')
         elif type == Package.ACK:
             if self.id == receiver:
@@ -189,6 +202,7 @@ class Node:
                     "last_meet": self.local_time(),
                 }
                 if self.listen_process:
+                    #print("ack receive interrupt")
                     self.listen_process.interrupt('ack_received')
 
         return True
@@ -208,6 +222,13 @@ class Node:
                 meet_with = id
 
         return (meet_with, meet_in)
+    
+    def update_clock_drift(self):
+        self.clock_drift += random.randint(0, CLOCK_DRIFT_PER_DAY)
 
     def local_time(self):
-        return math.floor(self.env.now * self.clock_drift)
+        if CLOCK_DRIFT_ENABLED:
+            #print(math.floor(self.env.now + self.clock_drift))
+            return math.floor(self.env.now + self.clock_drift)
+        else:
+            return math.floor(self.env.now)
