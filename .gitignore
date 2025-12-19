@@ -12,3 +12,4 @@ energy_plots/
 figures/
 *.log
 *.png
+test*

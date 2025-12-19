@@ -34,7 +34,7 @@ class Node:
             EnergyLogger().log(self.id, self.local_time(), self.harvester.energy)
 
             # Discovery part
-            listen_time = math.ceil(random.uniform(*LISTEN_TIME_RANGE))
+            listen_time = math.ceil(LISTEN_TIME)
             energy_to_use = listen_time * E_RECEIVE + E_TX + E_RX
 
             # Sync part

@@ -90,10 +90,11 @@ def simulate_with_checkpoints(checkpoints, run):
     print(f"Total energy used by all nodes: {total_e_used:.5f} J")
     print(f"Average energy consumption for each node troughout all the simulation: {average_energy_simulation:.5f} J")
     print(f"Average energy used per node per day: {avg_energy_per_day:.5f} J/day")
-    print("===================================\n")
+    print("===================================")
 
     EnergyLogger.plot(filename = f"v1_energy_plot_run_{run+1}")
     #NetworkTopology(Network.nodes).save(filename = f"v1_topology_run{run+1}")
+    print(f"Simulation {run + 1} complete!\n\n")
 
     return checkpoint_results, avg_energy_per_day, e_sync_per_cycle, discovery_progress
 
@@ -114,7 +115,6 @@ def simulate(number_of_runs, duration_days, seed):
         checkpoint_data, avg_energy_per_day, e_sync_per_cycle, discovery_progress = simulate_with_checkpoints(checkpoints, run)
         checkpoint_results_list.append(checkpoint_data)
         discovery_data_all_runs.append(discovery_progress)  # NEW: Store discovery data
-        print(f"Simulation {run + 1} complete!")
         avg_energy_days.append(avg_energy_per_day)
         e_sync_per_cycle_runs.append(e_sync_per_cycle)
 

@@ -35,16 +35,16 @@ if __name__ == "__main__":
     SF = 7
     BW = 500000
     CR = 3
-    PL = 13
+    PL = 11
 
     Tpacket = lora_toa(SF, BW, CR, PL)
-    Trx = 14.89/1000  # seconds
+    Trx = 1  # seconds
     Tstandby = 86400  # seconds
     Tidle = 86400  # seconds
     energy_tx, energy_rx, energy_standby, energy_idle = lora_energy_consumption(Tpacket, Trx, Tstandby, Tidle)
     print(f"For Packet Length: {PL} bytes:")
-    print(f"TX Energy: {energy_tx:.2f} mJ ({Tpacket:.3f} s)")
-    print(f"RX Energy: {energy_rx:.2f} mJ ({Trx:.3f} s)")
+    print(f"TX Energy: {energy_tx/1000:.5f} mJ ({Tpacket:.3f} s)")
+    print(f"RX Energy: {energy_rx/1000:.5f} mJ ({Trx:.3f} s)")
     print(f"Standby Energy: {energy_standby:.2f} mJ ({energy_standby/1000:.10f} J) ({Tstandby:.3f} s)")
     print(f"Idle Energy: {energy_idle:.2f} mJ ({energy_idle/1000:.10f} J) ({Tidle:.3f} s)")
     print((0.9083*16-9.2714)*10**-6 * 86400)

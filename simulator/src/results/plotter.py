@@ -298,14 +298,12 @@ class Plotter:
         ax.plot(days, avg_discovery, 'b-', linewidth=2.5, label='Average Discovery', zorder=10)
         
         # Add shaded region for min-max range
-        ax.fill_between(days, min_discovery, max_discovery, 
-                        alpha=0.2, color='blue', label='Min-Max Range')
+        #ax.fill_between(days, min_discovery, max_discovery, alpha=0.2, color='blue', label='Min-Max Range')
         
         # Add standard deviation band
         avg_array = np.array(avg_discovery)
         std_array = np.array(std_discovery)
-        ax.fill_between(days, avg_array - std_array, avg_array + std_array,
-                        alpha=0.15, color='green', label='±1 Std Dev')
+        #ax.fill_between(days, avg_array - std_array, avg_array + std_array, alpha=0.15, color='green', label='±1 Std Dev')
         
         # Formatting
         ax.set_xlabel('Duration (Days)')
@@ -313,8 +311,8 @@ class Plotter:
         ax.set_title(f'Total Node Discovery Progress Over Time\n({RUNS} runs, {NODES} nodes)', fontsize=14, fontweight='bold')
         ax.grid(True, alpha=0.3)
         ax.legend(loc='lower right')
-        ax.set_ylim(0, 105)
-        ax.set_xlim(days[0], days[-1])
+        #ax.set_ylim(0, 105)
+        #ax.set_xlim(days[0], days[-1])
         
         plt.tight_layout()
         plt.savefig('figures/v1_discovery_progress.png', dpi=300, bbox_inches='tight')
