@@ -1,4 +1,4 @@
-import simpy, random, os
+import simpy, random, os, time
 from statistics import mean
 
 from .core.node import Node
@@ -92,7 +92,7 @@ def simulate_with_checkpoints(checkpoints, run):
     print(f"Average energy used per node per day: {avg_energy_per_day:.5f} J/day")
     print("===================================")
 
-    EnergyLogger.plot(filename = f"v1_energy_plot_run_{run+1}")
+    #EnergyLogger.plot(filename = f"v1_energy_plot_run_{run+1}")
     #NetworkTopology(Network.nodes).save(filename = f"v1_topology_run{run+1}")
     print(f"Simulation {run + 1} complete!\n\n")
 
@@ -142,4 +142,7 @@ if __name__ == "__main__":
     duration_days = list(range(1, SIM_DAYS + 1))
     seed = SEED
 
+    start_time = time.time()
     simulate(number_of_runs, duration_days, seed)
+    end_time = time.time()
+    print(f"Total simulation time: {end_time - start_time:.2f} seconds")
