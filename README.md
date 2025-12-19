@@ -1,5 +1,5 @@
 ## Notes
 
-Maximum amount of seconds we can listen to (to receive and transmit as well) is 200 seconds
+Install requirements from requirements.txt
 
-Energy_plot is wrong when more runs.
+The code needs to be run from the simulator folder (due to graph paths) using "python3 -m src.main"

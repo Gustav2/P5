@@ -1,19 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 
 from statistics import mean
 from scipy import stats
 
-from ..config import ONE_DAY
+from ..config import ONE_DAY, RUNS, NODES
 
 class Plotter:
     def __init__(self):
         self.results = {}
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        figures_dir = os.path.join(current_dir, "../../figures/")
-        if not os.path.exists(figures_dir):
-            os.makedirs(figures_dir)
 
     def evaluation(self, checkpoint_results_list):
         """
@@ -120,38 +115,42 @@ class Plotter:
         # Energy Graph
         plt.figure()
         plt.plot(days, e_vals, marker='o',color='orange')
-        plt.title("Energy Consumption per Discovery Cycle vs Duration")
+        plt.title("Energy Consumption per DISC Cycle as a function of Simulation Duration", fontsize=14, fontweight='bold')
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy (J)")
         plt.grid(True)
-        plt.savefig("figures/energy_vs_days.png")
+        plt.tight_layout()
+        plt.savefig("figures/v1_energy_consumption_disc_cycle_vs_duration.png", dpi=300, bbox_inches='tight')
 
         # Energy for successfull discovery Graph
-        plt.figure()
-        plt.plot(days, success_disc_e, marker='o',color='orange')
-        plt.title("Energy Consumption per Successful Discovery Cycle vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Energy (J)")
-        plt.grid(True)
-        plt.savefig("figures/energy_success_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, success_disc_e, marker='o',color='orange')
+        #plt.title("Energy Consumption per Successful Discovery Cycle vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("Energy (J)")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/energy_success_vs_days.png", dpi=300, bbox_inches='tight')
 
         # Latency Graph
-        plt.figure()
-        plt.plot(days, t_vals, marker='o',color='red')
-        plt.title("Discovery Latency vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Latency (s)")
-        plt.grid(True)
-        plt.savefig("figures/latency_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, t_vals, marker='o',color='red')
+        #plt.title("Discovery Latency vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("Latency (s)")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/latency_vs_days.png", dpi=300, bbox_inches='tight')
 
         # Success Rate Graph
-        plt.figure()
-        plt.plot(days, s_vals, marker='o')
-        plt.title("Discovery Success Rate vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Success Rate (%)")
-        plt.grid(True)
-        plt.savefig("figures/success_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, s_vals, marker='o')
+        #plt.title("Discovery Success Rate vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("Success Rate (%)")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/success_vs_days.png", dpi=300, bbox_inches='tight')
 
         # Success of all runs graph, with 95% CI
         plt.figure()
@@ -186,39 +185,43 @@ class Plotter:
 
         # Plot 95% CI as shaded band
         plt.fill_between(days, lower, upper, alpha=0.2, label='95% CI')
-        plt.title("Discovery Success Rate (All Runs) vs Duration\n(with 95% CI across runs)")
+        plt.title("Discovery Success Rate as a function of Simulation Duration\n(with 95% CI across runs)", fontsize=14, fontweight='bold')
         plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Success Rate (%)")
+        plt.ylabel("DISC Success Rate (%)")
         plt.legend()
         plt.grid(True)
-        plt.savefig("figures/success_list_vs_days.png")
+        plt.tight_layout()
+        plt.savefig("figures/v1_disc_success_vs_duration.png", dpi=300, bbox_inches='tight')
 
         # SYNC Tries Graph
-        plt.figure()
-        plt.plot(days, sync_tries_vals, marker='o', color='green')
-        plt.title("Average SYNCs Sent vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Average SYNCs Sent")
-        plt.grid(True)
-        plt.savefig("figures/sync_tries_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, sync_tries_vals, marker='o', color='green')
+        #plt.title("Average SYNCs Sent vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("Average SYNCs Sent")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/sync_tries_vs_days.png", dpi=300, bbox_inches='tight')
 
         # ACKs Received Graph
-        plt.figure()
-        plt.plot(days, acks_vals, marker='o', color='blue')
-        plt.title("Average SYNC ACKs Received vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("Average SYNC ACKs Received")
-        plt.grid(True)
-        plt.savefig("figures/acks_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, acks_vals, marker='o', color='blue')
+        #plt.title("Average SYNC ACKs Received vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("Average SYNC ACKs Received")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/acks_vs_days.png", dpi=300, bbox_inches='tight')
 
         # SYNC Success Rate Graph
-        plt.figure()
-        plt.plot(days, sync_success_vals, marker='o', color='purple')
-        plt.title("Discovery Success Rate vs Duration")
-        plt.xlabel("Simulation Duration (days)")
-        plt.ylabel("SYNC Success Rate (%)")
-        plt.grid(True)
-        plt.savefig("figures/sync_success_vs_days.png")
+        #plt.figure()
+        #plt.plot(days, sync_success_vals, marker='o', color='purple')
+        #plt.title("Discovery Success Rate vs Duration", fontsize=14, fontweight='bold')
+        #plt.xlabel("Simulation Duration (days)")
+        #plt.ylabel("SYNC Success Rate (%)")
+        #plt.grid(True)
+        #plt.tight_layout()
+        #plt.savefig("figures/sync_success_vs_days.png", dpi=300, bbox_inches='tight')
 
         # SYNC Success Rate Graph with 95% CI
         plt.figure()
@@ -241,18 +244,85 @@ class Plotter:
 
         plt.plot(days, means_sync, marker='o', linewidth=2, label='Mean sync success rate')
         plt.fill_between(days, lower_sync, upper_sync, alpha=0.2, label='95% CI')
-        plt.title("SYNC Success Rate vs Duration\n(with 95% CI across runs)")
+        plt.title("SYNC Success Rate as a function of Simulation Duration\n(with 95% CI across runs)", fontsize=14, fontweight='bold')
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("SYNC Success Rate (%)")
         plt.legend()
         plt.grid(True)
-        plt.savefig("figures/sync_success_list_vs_days.png")
+        plt.tight_layout()
+        plt.savefig("figures/v1_sync_success_vs_duration.png", dpi=300, bbox_inches='tight')
 
         # Energy Consumption per SYNC Cycle Graph
         plt.figure()
         plt.plot(days, e_sync_per_cycle_vals, marker='o')
-        plt.title("Energy Consumption per SYNC Cycle vs Duration")
+        plt.title("Energy Consumption per SYNC Cycle as a function of Simulation Duration", fontsize=14, fontweight='bold')
         plt.xlabel("Simulation Duration (days)")
         plt.ylabel("Energy per Sync Cycle (J)")
         plt.grid(True)
-        plt.savefig("figures/Energy Consumption per SYNC Cycle vs Duration.png")
+        plt.tight_layout()
+        plt.savefig("figures/v1_energy_consumption_sync_cycle_vs_duration.png", dpi=300, bbox_inches='tight')
+
+    def plot_discovery_progress(self, discovery_data_all_runs, duration_days):
+        """
+        Plot discovery progress averaged across all runs.
+        
+        Args:
+            discovery_data_all_runs: List of discovery_progress dicts from each run
+            duration_days: List of checkpoint days
+        """
+        days = np.array(duration_days)
+        
+        # Aggregate data across runs
+        avg_discovery = []
+        min_discovery = []
+        max_discovery = []
+        std_discovery = []
+        
+        for day in duration_days:
+            checkpoint_time = int(day * ONE_DAY)
+            
+            # Collect avg discovery from all runs for this checkpoint
+            run_avgs = [run_data[checkpoint_time]['avg'] for run_data in discovery_data_all_runs]
+            run_mins = [run_data[checkpoint_time]['min'] for run_data in discovery_data_all_runs]
+            run_maxs = [run_data[checkpoint_time]['max'] for run_data in discovery_data_all_runs]
+            
+            avg_discovery.append(mean(run_avgs))
+            min_discovery.append(mean(run_mins))
+            max_discovery.append(mean(run_maxs))
+            std_discovery.append(np.std(run_avgs))
+        
+        # Create the plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        # Plot average discovery line
+        ax.plot(days, avg_discovery, 'b-', linewidth=2.5, label='Average Discovery', zorder=10)
+        
+        # Add shaded region for min-max range
+        ax.fill_between(days, min_discovery, max_discovery, 
+                        alpha=0.2, color='blue', label='Min-Max Range')
+        
+        # Add standard deviation band
+        avg_array = np.array(avg_discovery)
+        std_array = np.array(std_discovery)
+        ax.fill_between(days, avg_array - std_array, avg_array + std_array,
+                        alpha=0.15, color='green', label='±1 Std Dev')
+        
+        # Formatting
+        ax.set_xlabel('Duration (Days)')
+        ax.set_ylabel('Total Nodes Discovered (%)')
+        ax.set_title(f'Total Node Discovery Progress Over Time\n({RUNS} runs, {NODES} nodes)', fontsize=14, fontweight='bold')
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc='lower right')
+        ax.set_ylim(0, 105)
+        ax.set_xlim(days[0], days[-1])
+        
+        plt.tight_layout()
+        plt.savefig('figures/v1_discovery_progress.png', dpi=300, bbox_inches='tight')
+        
+        # Print summary statistics
+        print(f"\n=== Discovery Progress Summary ===")
+        print(f"Final average discovery: {avg_discovery[-1]:.2f}%")
+        print(f"Final min discovery: {min_discovery[-1]:.2f}%")
+        print(f"Final max discovery: {max_discovery[-1]:.2f}%")
+        print(f"Standard deviation at end: {std_discovery[-1]:.2f}%")
+        print("==================================\n")

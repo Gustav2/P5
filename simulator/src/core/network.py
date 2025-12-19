@@ -3,10 +3,10 @@ import random
 from typing import TYPE_CHECKING, List
 
 from ..config import PT_LOSS
-from ..node.state import State
+from ..core.state import State
 
 if TYPE_CHECKING:
-    from ..node.node import Node
+    from ..core.node import Node
 
 class Network:
     nodes: List["Node"] = []

@@ -13,7 +13,7 @@ class NetworkTopology:
         self._extract_edges()
         self._force_directed_layout()
         self._assign_colors()
-    
+
     def _extract_edges(self):
         connected = set()
         
@@ -122,7 +122,7 @@ class NetworkTopology:
                            fontsize=8, fontweight='bold', color='white', zorder=3)
         
         ax.axis('off')
+        plt.title("Network Topology", fontsize=14, fontweight='bold')
         plt.tight_layout()
-        plt.title("Network Topology", fontsize=16)
-        plt.savefig(filename, dpi=150, bbox_inches='tight', facecolor='#fafafa')
+        plt.savefig(filename, dpi=300, bbox_inches='tight', facecolor='#fafafa')
         plt.close()

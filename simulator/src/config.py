@@ -6,7 +6,7 @@ CLOCK_DRIFT_ENABLED = True     # Enable clock drift simulation
 CLOCK_DRIFT_PER_DAY = 500_000   # Max clock drift per day
 
 RUNS = 1                       # Number of runs for the simulation
-SIM_DAYS = 100                  # Actual number of days to simulate
+SIM_DAYS = 10                  # Actual number of days to simulate
 SEED = 42                       # Seed for random generator
     
 ONE_DAY = 86_400_000            # One day in miliseconds
