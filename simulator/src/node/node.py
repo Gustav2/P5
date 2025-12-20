@@ -13,6 +13,8 @@ class Node:
         self.x, self.y = x, y
         self.state: State = State.Idle
 
+        self.clock_drift = random.randint(*NODE_START_TIMES)
+
         self.kpi = KPI()
 
         self.harvester = Harvester(id)
@@ -103,5 +105,12 @@ class Node:
         self.kpi.add_e(E_RX)
         self.state = State.Receive
 
+    def update_clock_drift(self):
+        self.clock_drift += random.randint(0, CLOCK_DRIFT_PER_DAY)
+
     def local_time(self):
-        return math.floor(self.env.now * self.clock_drift)
+        if CLOCK_DRIFT_ENABLED:
+            #print(math.floor(self.env.now + self.clock_drift))
+            return math.floor(self.env.now + self.clock_drift)
+        else:
+            return math.floor(self.env.now)

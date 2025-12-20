@@ -26,6 +26,10 @@ def simulate_with_checkpoints(checkpoints, run):
         kpis = [n.kpi.get_disc_kpis(n.neighbors) for n in nodes]
         e_per_cycle, avg_time, avg_success = [mean(metric) for metric in zip(*kpis)]
         checkpoint_results[checkpoint_time] = (e_per_cycle, avg_time, avg_success)
+
+        for n in nodes:
+            n.update_clock_drift()
+
     total_e_used = sum(n.kpi.e_total for n in nodes)  # total energy of all nodes
     sim_days = max(checkpoints) / ONE_DAY             # duration of this run in days
     avg_energy_per_day = total_e_used / (NODES * sim_days)
@@ -65,8 +69,8 @@ def simulate(number_of_runs, duration_days, seed):
 
 if __name__ == "__main__":
     
-    number_of_runs = 3
-    duration_days = list(range(1, 81))
+    number_of_runs = 1
+    duration_days = list(range(1, 11))
     seed = 42
 
     simulate(number_of_runs, duration_days, seed)
